@@ -171,24 +171,7 @@ private struct ParamForm: View {
         case .openURL:
             TextField("https://usemagic.io", text: $urlString).textFieldStyle(.roundedBorder)
         case .keystroke:
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 8) {
-                    Text("Key code").font(MagicFont.text(13)).foregroundStyle(MagicColor.textSecondary)
-                    TextField("0", value: $keyCode, format: .number)
-                        .textFieldStyle(.roundedBorder).frame(width: 70)
-                }
-                HStack(spacing: 8) {
-                    ForEach(KeyModifier.allCases, id: \.self) { modifier in
-                        Toggle(modifier.symbol, isOn: Binding(
-                            get: { modifiers.contains(modifier) },
-                            set: { on in
-                                modifiers.removeAll { $0 == modifier }
-                                if on { modifiers.append(modifier) }
-                            }))
-                            .toggleStyle(.button)
-                    }
-                }
-            }
+            KeyRecorderField(keyCode: $keyCode, modifiers: $modifiers)
         case .shellScript:
             TextField("say hello", text: $script)
                 .textFieldStyle(.roundedBorder)

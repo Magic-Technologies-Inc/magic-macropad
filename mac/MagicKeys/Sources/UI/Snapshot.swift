@@ -54,10 +54,28 @@ enum Snapshot {
             try? png.write(to: url)
         }
 
+        func renderRecorder(to url: URL) {
+            let view = VStack(alignment: .leading, spacing: 12) {
+                Text("KEYSTROKE").font(MagicFont.text(11, weight: .semibold)).foregroundStyle(MagicColor.textTertiary)
+                KeyRecorderField(keyCode: .constant(0), modifiers: .constant([]))       // empty
+                KeyRecorderField(keyCode: .constant(9), modifiers: .constant([.command, .shift]))  // ⌘⇧V
+            }
+            .frame(width: 320)
+            .padding(20)
+            .background(MagicColor.surfaceCard)
+            let renderer = ImageRenderer(content: view)
+            renderer.scale = 2
+            guard let image = renderer.nsImage, let tiff = image.tiffRepresentation,
+                  let bitmap = NSBitmapImageRep(data: tiff),
+                  let png = bitmap.representation(using: .png, properties: [:]) else { return }
+            try? png.write(to: url)
+        }
+
         let base = (path as NSString).deletingPathExtension
         render(.light, to: URL(fileURLWithPath: base + "-light.png"))
         render(.dark, to: URL(fileURLWithPath: base + "-dark.png"))
         renderPicker(to: URL(fileURLWithPath: base + "-picker.png"))
+        renderRecorder(to: URL(fileURLWithPath: base + "-recorder.png"))
         exit(0)
     }
 }
