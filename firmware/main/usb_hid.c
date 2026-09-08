@@ -59,7 +59,7 @@ enum { ITF_NUM_HID = 0, ITF_NUM_TOTAL };
 
 static const uint8_t k1_configuration_descriptor[] = {
     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, K1_CONFIG_DESC_LEN,
-                          TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
+                          0 /* no remote wakeup — not implemented */, 100),
     TUD_HID_INOUT_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE,
                              sizeof(k1_report_descriptor),
                              0x01 /* EP OUT */, 0x81 /* EP IN */,
@@ -96,14 +96,20 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id,
 
 // ---- Report task -----------------------------------------------------------
 
+// Seq only advances on a successful send, so host-side gap detection flags
+// real USB losses, not benign drops while the host isn't polling.
 static void send_report(uint8_t msg, uint8_t b1, uint8_t b2,
                         uint8_t p0, uint8_t p1, uint8_t p2, uint8_t p3)
 {
-    uint8_t report[K1_REPORT_SIZE] = {msg, b1, b2, s_seq++, p0, p1, p2, p3};
-    if (!tud_hid_report(0, report, sizeof(report)))
+    uint8_t report[K1_REPORT_SIZE] = {msg, b1, b2, s_seq, p0, p1, p2, p3};
+    if (tud_hid_report(0, report, sizeof(report)))
+        s_seq++;
+    else
         ESP_LOGW(TAG, "report dropped (host not ready)");
 }
 
+// Best-effort delivery: while the host isn't polling, key events pile up in
+// the 32-slot queue and the oldest overflow is dropped by the scan task.
 static void report_task(void *arg)
 {
     QueueHandle_t key_queue = (QueueHandle_t)arg;
@@ -115,11 +121,14 @@ static void report_task(void *arg)
                         K1_FW_VERSION_MAJOR, K1_FW_VERSION_MINOR,
                         K1_KEY_COUNT, 0);
         }
-        if (xQueueReceive(key_queue, &ev, pdMS_TO_TICKS(10)) == pdTRUE) {
-            while (!tud_hid_ready())
-                vTaskDelay(pdMS_TO_TICKS(1));
-            send_report(K1_MSG_KEY_EVENT, ev.key, ev.state, 0, 0, 0, 0);
+        // Only dequeue when the interface can take a report, so a stalled
+        // key-event send never starves a pending GET_INFO reply.
+        if (!tud_hid_ready()) {
+            vTaskDelay(pdMS_TO_TICKS(10));
+            continue;
         }
+        if (xQueueReceive(key_queue, &ev, pdMS_TO_TICKS(10)) == pdTRUE)
+            send_report(K1_MSG_KEY_EVENT, ev.key, ev.state, 0, 0, 0, 0);
     }
 }
 
