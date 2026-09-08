@@ -148,11 +148,13 @@ private struct ParamForm: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             fields
-            HStack {
-                Spacer()
-                Button("Set") { onSet(build()) }
-                    .buttonStyle(.borderedProminent)
-                    .tint(MagicColor.cerulean)
+            if type != .openApp {  // Open App commits on selection — no Set button.
+                HStack {
+                    Spacer()
+                    Button("Set") { onSet(build()) }
+                        .buttonStyle(.borderedProminent)
+                        .tint(MagicColor.cerulean)
+                }
             }
         }
         .padding(.horizontal, 4)
@@ -164,10 +166,7 @@ private struct ParamForm: View {
     private var fields: some View {
         switch type {
         case .openApp:
-            HStack(spacing: 8) {
-                TextField("com.apple.Music", text: $bundleID).textFieldStyle(.roundedBorder)
-                Button("Choose…") { chooseApp() }
-            }
+            appPicker
         case .openURL:
             TextField("https://usemagic.io", text: $urlString).textFieldStyle(.roundedBorder)
         case .keystroke:
@@ -177,6 +176,64 @@ private struct ParamForm: View {
                 .textFieldStyle(.roundedBorder)
                 .font(.system(.body, design: .monospaced))
         }
+    }
+
+    /// Pick an app from a menu of running apps (or browse Applications) — no typing.
+    private var appPicker: some View {
+        Menu {
+            ForEach(runningApps(), id: \.id) { app in
+                Button {
+                    onSet(.openApp(bundleID: app.id))
+                } label: {
+                    if let icon = ProfileIcon.appIcon(app.id) {
+                        Label { Text(app.name) } icon: { Image(nsImage: icon) }
+                    } else {
+                        Text(app.name)
+                    }
+                }
+            }
+            Divider()
+            Button("Choose from Applications…") { chooseApp() }
+        } label: {
+            HStack(spacing: 8) {
+                if bundleID.isEmpty {
+                    Image(systemName: "app.dashed").foregroundStyle(MagicColor.textSecondary)
+                    Text("Choose an app…").foregroundStyle(MagicColor.textSecondary)
+                } else {
+                    if let icon = ProfileIcon.appIcon(bundleID) {
+                        Image(nsImage: icon).resizable().frame(width: 18, height: 18)
+                    }
+                    Text(appName(bundleID)).foregroundStyle(MagicColor.textPrimary)
+                }
+                Spacer()
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 11)).foregroundStyle(MagicColor.textTertiary)
+            }
+            .font(MagicFont.text(14))
+            .padding(.horizontal, 12)
+            .frame(height: 34)
+            .background(RoundedRectangle(cornerRadius: 8).fill(MagicColor.surfacePageAlt)
+                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(MagicColor.borderDefault, lineWidth: 1)))
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+    }
+
+    private func runningApps() -> [(id: String, name: String)] {
+        var seen = Set<String>()
+        return NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular }
+            .compactMap { app -> (id: String, name: String)? in
+                guard let id = app.bundleIdentifier, seen.insert(id).inserted,
+                      let name = app.localizedName else { return nil }
+                return (id, name)
+            }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    private func appName(_ bundleID: String) -> String {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return bundleID }
+        return FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
     }
 
     private func seed() {
@@ -205,7 +262,7 @@ private struct ParamForm: View {
         panel.allowsMultipleSelection = false
         if panel.runModal() == .OK, let url = panel.url,
            let bundle = Bundle(url: url), let id = bundle.bundleIdentifier {
-            bundleID = id
+            onSet(.openApp(bundleID: id))
         }
     }
 }
