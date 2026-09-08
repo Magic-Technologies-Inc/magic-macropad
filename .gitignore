@@ -1,0 +1,15 @@
+# ESP-IDF
+firmware/build/
+firmware/sdkconfig.old
+firmware/managed_components/
+firmware/dependencies.lock
+
+# Xcode / Swift
+mac/**/xcuserdata/
+mac/**/*.xcworkspace/xcuserdata/
+mac/**/DerivedData/
+mac/.build/
+mac/**/*.swiftpm/xcode/
+
+# macOS
+.DS_Store
