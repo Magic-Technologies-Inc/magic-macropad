@@ -16,7 +16,7 @@ changing the protocol or architecture.
 
 ## Layout
 
-- `cad/` — OpenSCAD enclosure (`k1_v1_parts.scad` v0.6: 3 keys, recessed MX switch well, drop-in lid) + STLs/renders; body/plug dims still placeholders until the MacBook is measured
+- `cad/` — OpenSCAD enclosure, one folder per revision: `v0/` (first one-piece sketch), `v1/` (flat 2-part design — lid on top, switch housings exposed; includes its slicer project), `v2/` (`k1_v2.scad`, current — recessed key well keeps the keys flush, drop-in lid with raised deck). Body/plug dims still placeholders until the MacBook is measured
 - `firmware/` — ESP-IDF 5.x + TinyUSB (`esp_tinyusb`) vendor-HID device
 - `mac/` — Magic Keys, SwiftUI menu-bar app (macOS 14+, `IOHIDManager`)
 - `docs/superpowers/specs/` — design specs

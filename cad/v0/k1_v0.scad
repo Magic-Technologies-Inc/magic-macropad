@@ -1,4 +1,4 @@
-// K1 (Keys v1) — rough concept body, v0.1
+// K1 enclosure v0 — rough one-piece concept sketch (superseded by v1/v2)
 // Not for printing/fit — a first-pass 3D sketch of the flush keypad form.
 // All dimensions are placeholders until the MacBook port position and
 // side taper are measured (see project summary).

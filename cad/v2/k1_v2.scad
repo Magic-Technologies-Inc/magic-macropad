@@ -1,4 +1,4 @@
-// K1 (Keys v1) — printable 2-part concept, v0.6
+// K1 enclosure v2 — printable 2-part design
 // Parts: tray + drop-in lid that doubles as an MX switch plate.
 // High-profile: the tray walls continue past the plate, so the lid sits
 // recessed on an internal ledge and the switch housings hide in a key well;
@@ -13,8 +13,8 @@
 // Body/plug dimensions remain placeholders until the MacBook is measured.
 //
 // Render one part at a time:
-//   openscad -D 'part="tray"' -o k1_tray.stl k1_v1_parts.scad
-//   openscad -D 'part="lid"'  -o k1_lid.stl  k1_v1_parts.scad
+//   openscad -D 'part="tray"' -o k1_tray.stl k1_v2.scad
+//   openscad -D 'part="lid"'  -o k1_lid.stl  k1_v2.scad
 //   part="assembly" / part="exploded" for viewing (includes mock switches/caps)
 
 part = "exploded"; // tray | lid | assembly | exploded
@@ -60,7 +60,10 @@ cap_overlap = 1;    // skirt drop below the housing top when seated
 plug_from_rear = 12;   // slot center from rear end
 slot_w = 10.5;         // fits a male USB-C breakout plug
 slot_h = 4;
-slot_z = floor_th + 1; // bottom of slot above cavity floor
+slot_z = (body_ht - slot_h) / 2; // slot centered on body height for now;
+                                 // final height = MacBook port center above
+                                 // desk (measure!), matched by the adapter
+                                 // cradle pedestal when that gets added
 
 /* ---------- Derived ---------- */
 cav_len  = body_len - 2 * wall;        // 111
