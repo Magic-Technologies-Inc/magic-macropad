@@ -71,7 +71,6 @@ struct MenuBarPanel: View {
                 }
             }
             Spacer()
-            settingsMenu
         }
     }
 
@@ -81,38 +80,6 @@ struct MenuBarPanel: View {
             return "K1 · fw \(info.firmwareMajor).\(info.firmwareMinor)"
         }
         return "K1 · USB-C"
-    }
-
-    private var settingsMenu: some View {
-        Menu {
-            Toggle("Launch at Login", isOn: Binding(
-                get: { SMAppService.mainApp.status == .enabled },
-                set: { enable in
-                    do {
-                        if enable { try SMAppService.mainApp.register() }
-                        else { try SMAppService.mainApp.unregister() }
-                    } catch { NSLog("MagicKeys: launch-at-login failed: \(error)") }
-                }))
-            #if DEBUG
-            Divider()
-            Menu("Virtual K1") {
-                ForEach(0..<3, id: \.self) { key in
-                    Button("Key \(key + 1): tap") { model.simulatePress(key: key) }
-                    Button("Key \(key + 1): double tap") {
-                        model.simulatePress(key: key)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { model.simulatePress(key: key) }
-                    }
-                    Button("Key \(key + 1): hold") { model.simulatePress(key: key, duration: 0.6) }
-                }
-            }
-            #endif
-        } label: {
-            Image(systemName: "gearshape").font(.system(size: 15, weight: .medium))
-        }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
-        .frame(width: 30, height: 30)
-        .foregroundStyle(MagicColor.textSecondary)
     }
 
     // MARK: Apps section
@@ -126,15 +93,7 @@ struct MenuBarPanel: View {
                     .textCase(.uppercase)
                     .foregroundStyle(MagicColor.textSecondary)
                 Spacer()
-                Button {
-                    model.addProfileForFrontApp()
-                } label: {
-                    Image(systemName: "plus").font(.system(size: 14, weight: .semibold))
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(MagicColor.textSecondary)
-                .disabled(model.frontAppHasProfile)
-                .help(addAppHelp)
+                addAppMenu
             }
             Text("Keys switch to these bindings when the app is in front.")
                 .font(MagicFont.text(12))
@@ -145,11 +104,26 @@ struct MenuBarPanel: View {
         }
     }
 
-    private var addAppHelp: String {
-        if let front = model.frontApps.frontApp {
-            return model.frontAppHasProfile ? "\(front.name) already has a profile" : "Add a profile for \(front.name)"
+    private var addAppMenu: some View {
+        let apps = model.addableApps()
+        return Menu {
+            if apps.isEmpty {
+                Text("No other apps running")
+            } else {
+                ForEach(apps) { app in
+                    Button(app.name) { model.addProfile(bundleID: app.id, name: app.name) }
+                }
+            }
+            Divider()
+            Button("Choose from Applications…") { model.addProfileByChoosingApp() }
+        } label: {
+            Image(systemName: "plus").font(.system(size: 14, weight: .semibold))
         }
-        return "Switch to an app to add a profile for it"
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .foregroundStyle(MagicColor.textSecondary)
+        .help("Add an app profile")
     }
 
     // MARK: Main card
@@ -224,13 +198,39 @@ struct MenuBarPanel: View {
     // MARK: Footer
 
     private var footer: some View {
-        HStack {
+        HStack(spacing: 14) {
             Text(model.isConnected
                  ? "Firmware \(model.deviceInfo.map { "\($0.firmwareMajor).\($0.firmwareMinor)" } ?? "—") · Connected"
                  : "Not connected · plug in your K1")
                 .font(MagicFont.text(12))
                 .foregroundStyle(MagicColor.textSecondary)
-            Spacer()
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            #if DEBUG
+            Menu {
+                ForEach(0..<3, id: \.self) { key in
+                    Button("Key \(key + 1): tap") { model.simulatePress(key: key) }
+                    Button("Key \(key + 1): double tap") {
+                        model.simulatePress(key: key)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { model.simulatePress(key: key) }
+                    }
+                    Button("Key \(key + 1): hold") { model.simulatePress(key: key, duration: 0.6) }
+                }
+            } label: {
+                Image(systemName: "wand.and.stars").font(.system(size: 12))
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .foregroundStyle(MagicColor.textTertiary)
+            .help("Virtual K1 (debug)")
+            #endif
+            Toggle(isOn: launchAtLogin) {
+                Text("Launch at Login").font(MagicFont.text(12, weight: .medium))
+            }
+            .toggleStyle(.checkbox)
+            .foregroundStyle(MagicColor.textSecondary)
+            .fixedSize()
             Button {
                 NSApp.terminate(nil)
             } label: {
@@ -241,6 +241,17 @@ struct MenuBarPanel: View {
             .foregroundStyle(MagicColor.textSecondary)
         }
         .padding(.horizontal, 2)
+    }
+
+    private var launchAtLogin: Binding<Bool> {
+        Binding(
+            get: { SMAppService.mainApp.status == .enabled },
+            set: { enable in
+                do {
+                    if enable { try SMAppService.mainApp.register() }
+                    else { try SMAppService.mainApp.unregister() }
+                } catch { NSLog("MagicKeys: launch-at-login failed: \(error)") }
+            })
     }
 
     // MARK: Binding helpers

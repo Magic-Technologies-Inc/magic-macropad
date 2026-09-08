@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import Foundation
 import MagicKeysCore
@@ -42,12 +43,43 @@ final class AppModel: ObservableObject {
         editingProfileID = id
     }
 
-    /// Adds a profile for the frontmost app (if any) and selects it.
-    func addProfileForFrontApp() {
-        guard let front = frontApps.frontApp else { return }
-        let symbol = "app.badge"
-        configStore.update { $0.addProfile(bundleID: front.bundleID, name: front.name, symbol: symbol) }
-        editingProfileID = front.bundleID
+    struct RunningApp: Identifiable, Equatable {
+        let id: String       // bundle id
+        let name: String
+    }
+
+    /// Running regular apps that don't already have a profile, for the add menu.
+    func addableApps() -> [RunningApp] {
+        let existing = Set(configStore.config.profiles.compactMap { $0.bundleID })
+        let selfID = Bundle.main.bundleIdentifier
+        var seen = Set<String>()
+        return NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular }
+            .compactMap { app -> RunningApp? in
+                guard let id = app.bundleIdentifier, id != selfID,
+                      !existing.contains(id), seen.insert(id).inserted,
+                      let name = app.localizedName else { return nil }
+                return RunningApp(id: id, name: name)
+            }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    /// Adds a profile for a specific app and selects it.
+    func addProfile(bundleID: String, name: String) {
+        configStore.update { $0.addProfile(bundleID: bundleID, name: name, symbol: "app.badge") }
+        editingProfileID = bundleID
+    }
+
+    /// Opens a file picker to add a profile for any installed app.
+    func addProfileByChoosingApp() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.application]
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url,
+              let bundle = Bundle(url: url), let id = bundle.bundleIdentifier else { return }
+        let name = FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
+        addProfile(bundleID: id, name: name)
     }
 
     func removeProfile(id: String) {
@@ -71,12 +103,6 @@ final class AppModel: ObservableObject {
                   config.profiles[i].keys.indices.contains(keyIndex) else { return }
             config.profiles[i].keys[keyIndex] = KeyBinding()
         }
-    }
-
-    /// Whether the frontmost app already has a profile (to gate "Add app").
-    var frontAppHasProfile: Bool {
-        guard let bundleID = frontApps.frontApp?.bundleID else { return true }
-        return configStore.config.profiles.contains { $0.bundleID == bundleID }
     }
 
     func start() {
