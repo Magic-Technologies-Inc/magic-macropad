@@ -12,9 +12,17 @@ enum Snapshot {
 
         let model = AppModel()
         model.configStore.update {
+            // Default profile: tap + hold bound (Terminal will inherit hold).
             $0.profiles[0].keys[0].tap = .openURL(urlString: "https://usemagic.io")
             $0.profiles[0].keys[0].hold = .media(command: .playPause)
-            $0.addProfile(bundleID: "com.apple.Terminal", name: "Terminal", symbol: "terminal")
+            let id = $0.addProfile(bundleID: "com.apple.Terminal", name: "Terminal", symbol: "terminal")
+            if let i = $0.profileIndex(id: id) {
+                $0.profiles[i].keys[0].tap = .shellScript(script: "clear")  // Terminal-specific tap
+            }
+        }
+        // Show the Terminal profile so the inherited "Default" tag is visible.
+        if ProcessInfo.processInfo.environment["MAGICKEYS_SNAPSHOT_PROFILE"] == "app" {
+            model.editingProfileID = "com.apple.Terminal"
         }
 
         func render(_ colorScheme: ColorScheme, to url: URL) {

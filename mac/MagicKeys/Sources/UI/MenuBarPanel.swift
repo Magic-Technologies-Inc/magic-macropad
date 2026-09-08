@@ -95,13 +95,21 @@ struct MenuBarPanel: View {
                 Spacer()
                 addAppMenu
             }
-            Text("Keys switch to these bindings when the app is in front.")
+            Text(appsSubtitle)
                 .font(MagicFont.text(12))
                 .foregroundStyle(MagicColor.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
             AppChipsView(profiles: config.profiles,
                          selectedID: model.editingProfileID,
                          onSelect: { model.selectProfile(id: $0); picking = nil })
         }
+    }
+
+    private var appsSubtitle: String {
+        if profile.isDefault {
+            return "Your default keys — they run in any app without its own setup."
+        }
+        return "These run only while \(profile.name) is in front; other keys fall back to the defaults."
     }
 
     private var addAppMenu: some View {
@@ -111,7 +119,15 @@ struct MenuBarPanel: View {
                 Text("No other apps running")
             } else {
                 ForEach(apps) { app in
-                    Button(app.name) { model.addProfile(bundleID: app.id, name: app.name) }
+                    Button {
+                        model.addProfile(bundleID: app.id, name: app.name)
+                    } label: {
+                        if let icon = ProfileIcon.appIcon(app.id) {
+                            Label { Text(app.name) } icon: { Image(nsImage: icon) }
+                        } else {
+                            Text(app.name)
+                        }
+                    }
                 }
             }
             Divider()
@@ -153,7 +169,7 @@ struct MenuBarPanel: View {
                     .textCase(.uppercase)
                     .foregroundStyle(MagicColor.textSecondary)
                 Spacer()
-                Text(profile.name)
+                Text(profile.isDefault ? "All apps" : profile.name)
                     .font(MagicFont.text(12))
                     .foregroundStyle(MagicColor.textSecondary)
             }
@@ -191,8 +207,17 @@ struct MenuBarPanel: View {
     private func gestureRow(_ slot: Slot) -> some View {
         GestureRow(label: slot.label,
                    action: action(slot),
+                   inherited: config.inheritedAction(for: gesture(slot), profileID: model.editingProfileID),
                    isOpen: picking == slot,
                    onTap: { picking = (picking == slot) ? nil : slot })
+    }
+
+    private func gesture(_ slot: Slot) -> MagicKeysCore.Gesture {
+        switch slot {
+        case .tap: return .tap(key: selectedKey)
+        case .doubleTap: return .doubleTap(key: selectedKey)
+        case .hold: return .hold(key: selectedKey)
+        }
     }
 
     // MARK: Footer

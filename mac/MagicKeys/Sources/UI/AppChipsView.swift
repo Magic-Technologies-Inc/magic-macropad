@@ -72,7 +72,7 @@ struct ProfileIcon: View {
         }
     }
 
-    private static func appIcon(_ bundleID: String) -> NSImage? {
+    static func appIcon(_ bundleID: String) -> NSImage? {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return nil }
         return NSWorkspace.shared.icon(forFile: url.path)
     }

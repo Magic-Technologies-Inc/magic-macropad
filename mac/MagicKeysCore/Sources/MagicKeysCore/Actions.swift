@@ -131,9 +131,20 @@ public struct K1Config: Codable, Equatable, Sendable {
         return defaultProfile
     }
 
-    /// Runtime lookup: resolve a gesture to an action using the front app's profile.
+    /// Runtime lookup: resolve a gesture to an action using the front app's
+    /// profile, falling back to the default profile when the app profile leaves
+    /// that gesture unbound — so a key still does its default thing.
     public func action(for gesture: Gesture, bundleID: String?) -> ActionConfig? {
-        profile(forBundleID: bundleID).action(for: gesture)
+        let appProfile = profile(forBundleID: bundleID)
+        if let action = appProfile.action(for: gesture) { return action }
+        return appProfile.isDefault ? nil : defaultProfile.action(for: gesture)
+    }
+
+    /// The default-profile action a gesture would inherit (for showing an
+    /// "inherited from macOS" hint in an app profile). Nil for the default profile.
+    public func inheritedAction(for gesture: Gesture, profileID: String) -> ActionConfig? {
+        guard let profile = profiles.first(where: { $0.id == profileID }), !profile.isDefault else { return nil }
+        return defaultProfile.action(for: gesture)
     }
 
     /// Structural invariants ConfigStore requires before accepting a loaded file.

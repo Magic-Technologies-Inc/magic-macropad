@@ -57,6 +57,24 @@ final class ActionsTests: XCTestCase {
                        .media(command: .playPause))
     }
 
+    func testUnboundAppGestureInheritsDefault() {
+        var config = K1Config.makeDefault()
+        config.profiles[0].keys[1].hold = .media(command: .mute)               // default hold
+        let id = config.addProfile(bundleID: "com.apple.Terminal", name: "Terminal", symbol: "terminal")
+        let i = config.profileIndex(id: id)!
+        config.profiles[i].keys[1].tap = .shellScript(script: "clear")         // Terminal tap only
+
+        // Terminal defines tap but not hold -> hold inherits the default.
+        XCTAssertEqual(config.action(for: .tap(key: 1), bundleID: "com.apple.Terminal"),
+                       .shellScript(script: "clear"))
+        XCTAssertEqual(config.action(for: .hold(key: 1), bundleID: "com.apple.Terminal"),
+                       .media(command: .mute))
+        // The default profile itself never "inherits" (returns nil when unbound).
+        XCTAssertNil(config.action(for: .doubleTap(key: 1), bundleID: nil))
+        XCTAssertEqual(config.inheritedAction(for: .hold(key: 1), profileID: id), .media(command: .mute))
+        XCTAssertNil(config.inheritedAction(for: .hold(key: 1), profileID: config.defaultProfile.id))
+    }
+
     func testAddAndRemoveProfile() {
         var config = K1Config.makeDefault()
         let id = config.addProfile(bundleID: "com.apple.Terminal", name: "Terminal", symbol: "terminal")
