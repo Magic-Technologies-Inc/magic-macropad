@@ -9,6 +9,7 @@ mac/**/xcuserdata/
 mac/**/*.xcworkspace/xcuserdata/
 mac/**/DerivedData/
 mac/.build/
+mac/MagicKeysCore/.build/
 mac/**/*.swiftpm/xcode/
 
 # macOS
