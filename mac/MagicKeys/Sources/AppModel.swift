@@ -8,6 +8,7 @@ final class AppModel: ObservableObject {
     @Published var lastGesture: Gesture?
 
     let configStore = ConfigStore()
+    private let actionEngine = ActionEngine()
     private let hidService = HIDService()
     private var pipeline: GesturePipeline?
 
@@ -33,9 +34,11 @@ final class AppModel: ObservableObject {
     private func makePipeline() -> GesturePipeline {
         let pipeline = GesturePipeline(timing: configStore.config.timing)
         pipeline.onGesture = { [weak self] gesture in
-            self?.lastGesture = gesture
-            NSLog("MagicKeys: gesture \(gesture)")
-            // ActionEngine executes these in Task 9.
+            guard let self else { return }
+            self.lastGesture = gesture
+            if let action = self.configStore.config.action(for: gesture) {
+                self.actionEngine.run(action)
+            }
         }
         return pipeline
     }
