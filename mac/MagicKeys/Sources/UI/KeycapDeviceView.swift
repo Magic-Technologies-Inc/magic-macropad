@@ -8,7 +8,9 @@ struct KeycapDeviceView: View {
 
     var body: some View {
         holder
-            .overlay(alignment: .topLeading) { plugStub }
+            .overlay(alignment: .topLeading) {
+                usbPlug.offset(x: -21, y: 26)
+            }
     }
 
     private var holder: some View {
@@ -31,13 +33,41 @@ struct KeycapDeviceView: View {
         .shadow(color: Color(hex: 0x052B42).opacity(0.32), radius: 12, y: 12)
     }
 
-    private var plugStub: some View {
-        RoundedRectangle(cornerRadius: 2.5, style: .continuous)
-            .fill(LinearGradient(colors: [Color(hex: 0xE6EAED), Color(hex: 0xA6B0B8), Color(hex: 0x68757F)],
+    /// A USB-C plug protruding from the body's inner face: a short black
+    /// over-mold neck and a brushed-metal connector shell with a subtle sheen.
+    private var usbPlug: some View {
+        HStack(spacing: 0) {
+            connectorShell
+            overmoldNeck
+        }
+        .shadow(color: Color(hex: 0x050607).opacity(0.35), radius: 3, x: -1, y: 2)
+    }
+
+    private var connectorShell: some View {
+        RoundedRectangle(cornerRadius: 5, style: .continuous)
+            .fill(LinearGradient(
+                colors: [Color(hex: 0xF4F6F8), Color(hex: 0xCBD2D8), Color(hex: 0x9AA6AE), Color(hex: 0xC2CAD0)],
+                startPoint: .top, endPoint: .bottom))
+            .frame(width: 17, height: 11)
+            .overlay(  // rim
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .strokeBorder(.white.opacity(0.65), lineWidth: 0.5))
+            .overlay(  // top specular streak
+                Capsule().fill(.white.opacity(0.55))
+                    .frame(height: 1.5).padding(.horizontal, 3).offset(y: -2.5))
+            .overlay(  // faint seam line
+                Rectangle().fill(Color(hex: 0x68757F).opacity(0.45))
+                    .frame(height: 0.75).padding(.horizontal, 2))
+    }
+
+    private var overmoldNeck: some View {
+        UnevenRoundedRectangle(topLeadingRadius: 1, bottomLeadingRadius: 1,
+                               bottomTrailingRadius: 2, topTrailingRadius: 2, style: .continuous)
+            .fill(LinearGradient(colors: [Color(hex: 0x2A3138), Color(hex: 0x14181C)],
                                  startPoint: .top, endPoint: .bottom))
-            .frame(width: 20, height: 14)
-            .overlay(RoundedRectangle(cornerRadius: 2.5).strokeBorder(.white.opacity(0.5), lineWidth: 0.5))
-            .offset(x: -11, y: 20)
+            .frame(width: 8, height: 15)
+            .overlay(RoundedRectangle(cornerRadius: 1)
+                .strokeBorder(.white.opacity(0.10), lineWidth: 0.5))
     }
 
     private func keycap(_ key: Int) -> some View {
