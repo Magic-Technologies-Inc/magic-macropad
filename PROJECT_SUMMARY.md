@@ -38,10 +38,10 @@ actions.
   and side taper still need measuring)
 - ✅ Architecture designed and spec approved:
   [docs/superpowers/specs/2026-09-07-k1-firmware-and-mac-app-design.md](docs/superpowers/specs/2026-09-07-k1-firmware-and-mac-app-design.md)
-- ⬜ Implementation plan
-- ⬜ Firmware scaffold (protocol first — the app consumes it)
+- ✅ Implementation plans (firmware + Mac app, in docs/superpowers/plans/)
+- ✅ Firmware: vendor-HID device with debounced key events + GET_INFO (build-verified; flash + enumeration pending hardware)
 - ✅ Magic Keys app: HID pipeline, gesture engine, action engine, config UI, virtual K1
-- ⬜ Hardware-in-loop smoke test (Python `hidapi`)
+- 🔶 Hardware-in-loop smoke test written (run pending hardware)
 - ⬜ CAD update 4 → 3 keys; real measurements
 
 ## Explicitly out of scope for v1
