@@ -2,8 +2,8 @@ import AppKit
 import SwiftUI
 import MagicKeysCore
 
-/// Horizontal row of per-app profile chips. The active profile expands to show
-/// its name; the rest are icon-only circles.
+/// Horizontal row of per-app profile chips — each shows its icon + name at a
+/// fixed size; only the selected chip's styling changes, so nothing reflows.
 struct AppChipsView: View {
     let profiles: [AppProfile]
     let selectedID: String
@@ -18,40 +18,35 @@ struct AppChipsView: View {
             }
             .padding(.vertical, 1)
             .frame(height: 42)
-            .animation(.easeInOut(duration: 0.16), value: selectedID)
         }
         .frame(height: 42)
     }
 
-    @ViewBuilder
     private func chip(_ profile: AppProfile) -> some View {
         let active = profile.id == selectedID
-        Button {
+        return Button {
             onSelect(profile.id)
         } label: {
             HStack(spacing: 8) {
                 ProfileIcon(profile: profile, size: 18)
-                if active {
-                    Text(profile.name)
-                        .font(MagicFont.text(14, weight: .medium))
-                        .foregroundStyle(MagicColor.textPrimary)
-                        .fixedSize()
-                        .transition(.opacity)
-                }
+                Text(profile.name)
+                    .font(MagicFont.text(14, weight: .medium))  // constant weight → width never changes
+                    .fixedSize()
             }
             .frame(height: 40)
-            .padding(.horizontal, active ? 14 : 0)
-            .frame(minWidth: active ? nil : 40)
-            .background {
-                ZStack {
-                    Circle().fill(MagicColor.surfacePage.opacity(0.5)).opacity(active ? 0 : 1)
-                    Capsule().fill(MagicColor.surfaceCard)
-                        .overlay(Capsule().strokeBorder(MagicColor.borderSubtle, lineWidth: 1))
-                        .shadow(color: MagicColor.prussian.opacity(0.10), radius: 2, y: 1)
-                        .opacity(active ? 1 : 0)
-                }
-            }
+            .padding(.horizontal, 14)
+            .background(
+                Capsule()
+                    .fill(active ? MagicColor.surfaceCard : MagicColor.surfacePageAlt.opacity(0.6))
+                    .overlay(Capsule().strokeBorder(active ? MagicColor.cerulean.opacity(0.55)
+                                                    : MagicColor.borderSubtle,
+                                                    lineWidth: active ? 1.5 : 1))
+                    .shadow(color: active ? MagicColor.prussian.opacity(0.12) : .clear, radius: 3, y: 1)
+            )
             .foregroundStyle(active ? MagicColor.textPrimary : MagicColor.textSecondary)
+            // Color/selection crossfades in place; width never changes, so
+            // neighbouring chips don't shift.
+            .animation(.easeInOut(duration: 0.15), value: active)
         }
         .buttonStyle(.plain)
         .help(profile.name)
