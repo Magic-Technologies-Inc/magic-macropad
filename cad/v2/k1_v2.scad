@@ -39,6 +39,19 @@ well_depth = 7;    // wall height above the plate; hides the 6.6mm housing
 tray_ht = floor_th + cav_depth;               // ledge height, 8.5
 body_ht = tray_ht + lid_th + well_depth;      // full shell, 17
 
+/* ---------- Lid retention: press-to-open rocker ----------
+   Snap bumps only at the FRONT of the deck; the rear (USB end) ledge is
+   relieved so the lid can dip there. Press the deck above the USB slot ->
+   the lid pivots on the ledge edge at pivot_x -> the front pops up out of
+   its grooves. ~0.25mm engagement; walls flex. Tune snap_r/snap_grv_r if
+   the lid is too loose or won't click in. */
+snap_r     = 0.4;    // bump radius (proud of the lid side face)
+snap_grv_r = 0.5;    // groove radius in the tray wall (slop built in)
+snap_len   = 6;      // bump length along the body
+snap_xs    = [50];   // front of the deck only
+pivot_x    = 38;     // ledge support ends here; relieved rearward
+relief     = 1.6;    // rear dip travel (drives the front lift)
+
 /* ---------- Keys (MX) ---------- */
 key_count       = 3;
 key_pitch       = 19;    // MX standard
@@ -64,6 +77,13 @@ slot_z = (body_ht - slot_h) / 2; // slot centered on body height for now;
                                  // final height = MacBook port center above
                                  // desk (measure!), matched by the adapter
                                  // cradle pedestal when that gets added
+// Lid notch over the slot: the slot's upper half is above the ledge, so the
+// lid plate + deck must open up behind it for the plug/adapter to pass.
+usb_notch_w     = slot_w + 1;
+usb_notch_depth = 12;  // into the lid from the inner edge; placeholder until
+                       // the 90-degree adapter is measured (becomes cradle)
+usb_notch_h     = slot_z + slot_h + 1 - tray_ht;  // clears the slot top;
+                                                  // deck top stays closed
 
 /* ---------- Derived ---------- */
 cav_len  = body_len - 2 * wall;        // 111
@@ -98,6 +118,15 @@ module tray() {
         // USB-C slot through the inner (Y=0) wall
         translate([plug_from_rear - slot_w / 2, -1, slot_z])
             cube([slot_w, wall + 2, slot_h]);
+        // snap grooves in the upper wall inner faces
+        for (x = snap_xs, y = [wall_upper, body_wid - wall_upper])
+            translate([x - snap_len / 2 - 0.75, y,
+                       tray_ht + lid_th + well_depth / 2])
+                rotate([0, 90, 0])
+                    cylinder(h = snap_len + 1.5, r = snap_grv_r);
+        // ledge relief rear of the pivot so the lid can rock down there
+        translate([wall_upper, wall_upper, tray_ht - relief])
+            cube([pivot_x - wall_upper, well_wid, relief + 0.01]);
     }
 }
 
@@ -116,7 +145,17 @@ module lid() {
                 rounded_box(well_rear - wall_upper - fit_clr, lid_wid,
                             lid_th + well_depth, 1);
             }
+            // snap bumps on the deck side faces
+            for (x = snap_xs, y = [wall_upper + fit_clr,
+                                   body_wid - wall_upper - fit_clr])
+                translate([x - snap_len / 2, y, lid_th + well_depth / 2])
+                    rotate([0, 90, 0])
+                        cylinder(h = snap_len, r = snap_r);
         }
+        // tunnel over the USB slot so the plug/adapter can pass the lid
+        // (open at the inner edge and below; deck top stays closed)
+        translate([plug_from_rear - usb_notch_w / 2, -1, -1])
+            cube([usb_notch_w, usb_notch_depth + 1, usb_notch_h + 1]);
         // MX plate cutouts — switches drop in from the top and clip under
         for (i = [0 : key_count - 1])
             translate([key_cx(i) - plate_hole / 2,
