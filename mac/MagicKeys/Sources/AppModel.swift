@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import MagicKeysCore
 
@@ -11,6 +12,16 @@ final class AppModel: ObservableObject {
     private let actionEngine = ActionEngine()
     private let hidService = HIDService()
     private var pipeline: GesturePipeline?
+    private var configObserver: AnyCancellable?
+
+    init() {
+        // ConfigStore is a nested ObservableObject; SwiftUI views observe AppModel,
+        // not it. Forward its changes so config edits re-render the UI immediately
+        // instead of waiting for the next unrelated invalidation.
+        configObserver = configStore.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }
+    }
 
     func start() {
         pipeline = makePipeline()
