@@ -39,8 +39,7 @@ struct MagicKeysApp: App {
         }
 
         Window("Magic Keys", id: "config") {
-            Text("Configuration UI lands in Task 10")
-                .frame(minWidth: 520, minHeight: 320)
+            ConfigView()
                 .environmentObject(model)
         }
         .windowResizability(.contentSize)
