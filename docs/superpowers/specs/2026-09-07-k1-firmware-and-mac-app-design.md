@@ -67,8 +67,11 @@ SwiftUI menu-bar app (`MenuBarExtra`), macOS 14+. Four isolated units:
      only when first used)
    - Media control (play/pause, volume up/down, mute)
    - Run shell script
-   Actions conform to a `MagicAction` protocol so later actions (e.g. smart-home
-   triggers via the Magic FastAPI server) slot in without engine changes.
+   Actions are a Codable `ActionConfig` enum with an exhaustive switch in
+   ActionEngine — adding a later action (e.g. smart-home triggers via the Magic
+   FastAPI server) is one new enum case plus one switch arm, and the compiler
+   flags every site that must handle it. (Chosen over a `MagicAction` protocol
+   because enums get Codable persistence for free.)
 4. **ConfigStore** — Codable JSON at
    `~/Library/Application Support/MagicKeys/config.json`, observed by the UI.
 
