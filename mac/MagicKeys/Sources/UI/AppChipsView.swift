@@ -8,6 +8,9 @@ struct AppChipsView: View {
     let profiles: [AppProfile]
     let selectedID: String
     let onSelect: (String) -> Void
+    /// The parent's horizontal content margin — the row breaks out past it so
+    /// chips scroll all the way to the panel edge, while resting aligned.
+    var edgeInset: CGFloat = 0
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -16,10 +19,12 @@ struct AppChipsView: View {
                     chip(profile)
                 }
             }
+            .padding(.horizontal, edgeInset)
             .padding(.vertical, 1)
             .frame(height: 42)
         }
         .frame(height: 42)
+        .padding(.horizontal, -edgeInset)
     }
 
     private func chip(_ profile: AppProfile) -> some View {

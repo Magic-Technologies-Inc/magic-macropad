@@ -103,24 +103,15 @@ struct MenuBarPanel: View {
                 Spacer()
                 addAppMenu
             }
-            Text(appsSubtitle)
+            Text("Give an app its own key setup — otherwise keys use your defaults.")
                 .font(MagicFont.text(12))
                 .foregroundStyle(MagicColor.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
-                .id(model.editingProfileID)
-                .transition(.opacity)
-                .animation(.easeInOut(duration: 0.2), value: model.editingProfileID)
             AppChipsView(profiles: config.profiles,
                          selectedID: model.editingProfileID,
-                         onSelect: { model.selectProfile(id: $0); picking = nil })
+                         onSelect: { model.selectProfile(id: $0); picking = nil },
+                         edgeInset: 16)
         }
-    }
-
-    private var appsSubtitle: String {
-        if profile.isDefault {
-            return "Your default keys — they run in any app without its own setup."
-        }
-        return "These run only while \(profile.name) is in front; other keys fall back to the defaults."
     }
 
     private var addAppMenu: some View {
