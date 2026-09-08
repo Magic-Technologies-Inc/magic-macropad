@@ -21,3 +21,4 @@ firmware/sdkconfig
 
 # Firmware tooling
 firmware/tools/.venv/
+__pycache__/
