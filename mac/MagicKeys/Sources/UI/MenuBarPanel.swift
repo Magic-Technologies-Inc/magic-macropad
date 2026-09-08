@@ -30,16 +30,24 @@ struct MenuBarPanel: View {
             header
             Divider().overlay(MagicColor.borderDefault).padding(.vertical, 12)
             appsSection
-            mainCard.padding(.top, 14)
-            if let slot = picking {
-                ActionPickerSheet(
-                    title: "Assign to \(slot.label.lowercased())",
-                    current: action(slot),
-                    onSet: { setAction(slot, $0); picking = nil },
-                    onClose: { picking = nil })
-                    .padding(.top, 12)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+            // Card and picker share a fixed-height region and swap in place, so
+            // the menu-bar popover never has to grow (it can't resize once open).
+            ZStack {
+                if let slot = picking {
+                    ActionPickerSheet(
+                        title: "Assign to \(slot.label.lowercased())",
+                        current: action(slot),
+                        onSet: { setAction(slot, $0); picking = nil },
+                        onClose: { picking = nil })
+                        .transition(.opacity)
+                } else {
+                    mainCard
+                        .frame(maxHeight: .infinity, alignment: .top)
+                        .transition(.opacity)
+                }
             }
+            .frame(height: 290)
+            .padding(.top, 14)
             footer.padding(.top, 14)
         }
         .padding(16)

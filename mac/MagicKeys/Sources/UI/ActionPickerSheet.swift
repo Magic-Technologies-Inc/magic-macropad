@@ -22,9 +22,12 @@ struct ActionPickerSheet: View {
             header
             switch stage {
             case .list: actionList
-            case .params(let type, let draft): paramForm(type, draft)
+            case .params(let type, let draft):
+                paramForm(type, draft)
+                Spacer(minLength: 0)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(EdgeInsets(top: 14, leading: 12, bottom: 12, trailing: 12))
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -83,7 +86,7 @@ struct ActionPickerSheet: View {
                 }
             }
         }
-        .frame(maxHeight: 236)
+        .frame(maxHeight: .infinity)
     }
 
     private func row(icon: String, name: String, hint: String, action: @escaping () -> Void) -> some View {

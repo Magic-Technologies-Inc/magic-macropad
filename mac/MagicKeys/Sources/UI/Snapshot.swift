@@ -38,9 +38,26 @@ enum Snapshot {
             try? png.write(to: url)
         }
 
+        func renderPicker(to url: URL) {
+            let view = ActionPickerSheet(
+                title: "Assign to tap",
+                current: .openURL(urlString: "https://usemagic.io"),
+                onSet: { _ in }, onClose: {})
+                .frame(width: 442, height: 290)
+                .padding(16)
+                .background(MagicColor.surfaceGlass)
+            let renderer = ImageRenderer(content: view)
+            renderer.scale = 2
+            guard let image = renderer.nsImage, let tiff = image.tiffRepresentation,
+                  let bitmap = NSBitmapImageRep(data: tiff),
+                  let png = bitmap.representation(using: .png, properties: [:]) else { return }
+            try? png.write(to: url)
+        }
+
         let base = (path as NSString).deletingPathExtension
         render(.light, to: URL(fileURLWithPath: base + "-light.png"))
         render(.dark, to: URL(fileURLWithPath: base + "-dark.png"))
+        renderPicker(to: URL(fileURLWithPath: base + "-picker.png"))
         exit(0)
     }
 }
