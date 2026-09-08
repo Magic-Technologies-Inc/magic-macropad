@@ -48,14 +48,29 @@ enum MagicColor {
     static let slate50 = Color(hex: 0xF4F6F7)
     static let paper = Color(hex: 0xFFFFFF)
 
-    // Semantic
+    // Semantic — text
     static let textPrimary = Color(light: NSColor(hex: 0x050607), dark: NSColor(hex: 0xFFFFFF))
     static let textSecondary = Color(light: NSColor(hex: 0x68757F), dark: NSColor(hex: 0xFFFFFF, alpha: 0.62))
     static let textTertiary = Color(light: NSColor(hex: 0xA6B0B8), dark: NSColor(hex: 0xFFFFFF, alpha: 0.38))
-    static let surfacePage = Color(light: NSColor(hex: 0xF4F6F7), dark: NSColor(hex: 0x050607))
+
+    // Semantic — surface
+    static let surfacePage = Color(light: NSColor(hex: 0xFFFFFF), dark: NSColor(hex: 0x050607))
+    static let surfacePageAlt = Color(light: NSColor(hex: 0xF4F6F7), dark: NSColor(hex: 0x14181C))
     static let surfaceCard = Color(light: NSColor(hex: 0xFFFFFF), dark: NSColor(hex: 0x14181C))
     static let surfaceSunken = Color(light: NSColor(hex: 0xE6EAED), dark: NSColor(hex: 0x0C0F12))
+    static let surfaceAccentSoft = Color(light: NSColor(hex: 0xFCEBE1), dark: NSColor(hex: 0xE3520C, alpha: 0.18))
+    // Frosted panel material (over the desktop behind a popover).
+    static let surfaceGlass = Color(light: NSColor(hex: 0xF6F7F8, alpha: 0.92), dark: NSColor(hex: 0x14181C, alpha: 0.82))
+
+    // Semantic — border
+    static let borderSubtle = Color(light: NSColor(hex: 0xE6EAED), dark: NSColor(hex: 0xFFFFFF, alpha: 0.08))
+    static let borderDefault = Color(light: NSColor(hex: 0xCCD3D8), dark: NSColor(hex: 0xFFFFFF, alpha: 0.14))
+    static let borderAccent = dawn
     static let borderHairline = Color(light: NSColor(hex: 0x052B42, alpha: 0.10), dark: NSColor(hex: 0xFFFFFF, alpha: 0.08))
+
+    // State
+    static let stateSuccess = Color(hex: 0x1E7A54)
+
     static let deviceBackdrop = Color(light: NSColor(hex: 0xEDF3FC), dark: NSColor(hex: 0x0A1119))
 }
 

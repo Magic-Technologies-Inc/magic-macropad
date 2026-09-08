@@ -47,18 +47,29 @@ public struct GestureTiming: Codable, Equatable, Sendable {
     }
 }
 
-public struct K1Config: Codable, Equatable, Sendable {
+/// A set of key bindings scoped to one application (or the global fallback).
+/// The profile whose `bundleID` matches the front app wins at gesture time;
+/// the profile with `bundleID == nil` is the default used when nothing matches.
+public struct AppProfile: Codable, Equatable, Sendable, Identifiable {
+    public var id: String        // stable; "default" for the global fallback
+    public var name: String      // display name for the chip ("macOS", "Terminal")
+    public var bundleID: String? // nil => global/default profile
+    public var symbol: String    // SF Symbol name for the chip
     public var keys: [KeyBinding]
-    public var timing: GestureTiming
 
-    public init(keys: [KeyBinding], timing: GestureTiming) {
+    public init(id: String, name: String, bundleID: String?, symbol: String, keys: [KeyBinding]) {
+        self.id = id
+        self.name = name
+        self.bundleID = bundleID
+        self.symbol = symbol
         self.keys = keys
-        self.timing = timing
     }
 
-    public static func makeDefault() -> K1Config {
-        K1Config(keys: Array(repeating: KeyBinding(), count: K1Protocol.keyCount),
-                 timing: GestureTiming())
+    public var isDefault: Bool { bundleID == nil }
+
+    public static func makeDefaultProfile() -> AppProfile {
+        AppProfile(id: "default", name: "macOS", bundleID: nil, symbol: "desktopcomputer",
+                   keys: Array(repeating: KeyBinding(), count: K1Protocol.keyCount))
     }
 
     public func action(for gesture: Gesture) -> ActionConfig? {
@@ -67,5 +78,89 @@ public struct K1Config: Codable, Equatable, Sendable {
         case .doubleTap(let key): return keys.indices.contains(key) ? keys[key].doubleTap : nil
         case .hold(let key): return keys.indices.contains(key) ? keys[key].hold : nil
         }
+    }
+}
+
+public struct K1Config: Codable, Equatable, Sendable {
+    public var profiles: [AppProfile]
+    public var timing: GestureTiming
+
+    enum CodingKeys: String, CodingKey { case profiles, timing, keys }
+
+    public init(profiles: [AppProfile], timing: GestureTiming) {
+        self.profiles = profiles
+        self.timing = timing
+    }
+
+    /// Decodes the current schema, and migrates the legacy flat `keys` array
+    /// (pre-profiles) into the default profile.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.timing = try c.decodeIfPresent(GestureTiming.self, forKey: .timing) ?? GestureTiming()
+        if let profiles = try c.decodeIfPresent([AppProfile].self, forKey: .profiles), !profiles.isEmpty {
+            self.profiles = profiles
+        } else if let keys = try c.decodeIfPresent([KeyBinding].self, forKey: .keys) {
+            var defaultProfile = AppProfile.makeDefaultProfile()
+            defaultProfile.keys = keys
+            self.profiles = [defaultProfile]
+        } else {
+            self.profiles = [AppProfile.makeDefaultProfile()]
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(profiles, forKey: .profiles)
+        try c.encode(timing, forKey: .timing)
+    }
+
+    public static func makeDefault() -> K1Config {
+        K1Config(profiles: [.makeDefaultProfile()], timing: GestureTiming())
+    }
+
+    /// The global fallback profile (always present as an invariant).
+    public var defaultProfile: AppProfile {
+        profiles.first(where: { $0.isDefault }) ?? profiles[0]
+    }
+
+    /// The profile that applies for a given front-app bundle id.
+    public func profile(forBundleID bundleID: String?) -> AppProfile {
+        if let bundleID, let match = profiles.first(where: { $0.bundleID == bundleID }) {
+            return match
+        }
+        return defaultProfile
+    }
+
+    /// Runtime lookup: resolve a gesture to an action using the front app's profile.
+    public func action(for gesture: Gesture, bundleID: String?) -> ActionConfig? {
+        profile(forBundleID: bundleID).action(for: gesture)
+    }
+
+    /// Structural invariants ConfigStore requires before accepting a loaded file.
+    public var isValid: Bool {
+        !profiles.isEmpty
+            && profiles.contains(where: { $0.isDefault })
+            && profiles.allSatisfy { $0.keys.count == K1Protocol.keyCount }
+    }
+
+    // MARK: Profile management (used by the config UI)
+
+    /// Adds an app profile if one for `bundleID` doesn't already exist; returns its id.
+    @discardableResult
+    public mutating func addProfile(bundleID: String, name: String, symbol: String) -> String {
+        if let existing = profiles.first(where: { $0.bundleID == bundleID }) { return existing.id }
+        let profile = AppProfile(id: bundleID, name: name, bundleID: bundleID, symbol: symbol,
+                                 keys: Array(repeating: KeyBinding(), count: K1Protocol.keyCount))
+        profiles.append(profile)
+        return profile.id
+    }
+
+    /// Removes a profile by id. The default profile can never be removed.
+    public mutating func removeProfile(id: String) {
+        profiles.removeAll { $0.id == id && !$0.isDefault }
+    }
+
+    public func profileIndex(id: String) -> Int? {
+        profiles.firstIndex(where: { $0.id == id })
     }
 }
