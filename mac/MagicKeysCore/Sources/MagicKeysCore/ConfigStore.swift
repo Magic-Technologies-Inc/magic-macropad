@@ -16,7 +16,8 @@ public final class ConfigStore: ObservableObject {
     public init(directory: URL = ConfigStore.defaultDirectory()) {
         self.fileURL = directory.appendingPathComponent("config.json")
         if let data = try? Data(contentsOf: fileURL),
-           let loaded = try? JSONDecoder().decode(K1Config.self, from: data) {
+           let loaded = try? JSONDecoder().decode(K1Config.self, from: data),
+           loaded.keys.count == K1Protocol.keyCount {
             self.config = loaded
         } else {
             self.config = K1Config.makeDefault()
