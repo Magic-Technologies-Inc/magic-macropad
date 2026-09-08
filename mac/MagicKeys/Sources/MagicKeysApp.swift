@@ -1,20 +1,53 @@
+import AppKit
 import SwiftUI
 import MagicKeysCore
 import ServiceManagement
 
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    // Re-open the window when the user clicks the Dock icon with no windows open.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { NSApp.windows.first?.makeKeyAndOrderFront(nil) }
+        return true
+    }
+}
+
 @main
 struct MagicKeysApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var model = AppModel()
     @Environment(\.openWindow) private var openWindow
 
+    init() {
+        MagicFont.registerBundledFonts()
+        #if DEBUG
+        Snapshot.runIfRequested()
+        #endif
+    }
+
     var body: some Scene {
+        // Main window — a Logi Options+-style single window, open at launch.
+        WindowGroup(id: "main") {
+            ConfigView()
+                .environmentObject(model)
+                .task { model.start() }
+        }
+        .windowResizability(.contentSize)
+        .restorationBehavior(.disabled)
+
+        // Menu-bar presence for quick status while the window is closed.
         MenuBarExtra {
             Text(model.isConnected
                  ? "K1 connected" + (model.deviceInfo.map { " — fw \($0.firmwareMajor).\($0.firmwareMinor)" } ?? "")
                  : "K1 not connected")
             Divider()
-            Button("Configure…") {
-                openWindow(id: "config")
+            Button("Open Magic Keys…") {
+                NSApp.setActivationPolicy(.regular)
+                openWindow(id: "main")
                 NSApp.activate(ignoringOtherApps: true)
             }
             Toggle("Launch at Login", isOn: Binding(
@@ -46,13 +79,6 @@ struct MagicKeysApp: App {
             Button("Quit Magic Keys") { NSApp.terminate(nil) }
         } label: {
             Image(systemName: model.isConnected ? "circle.grid.3x1.fill" : "circle.grid.3x1")
-                .task { model.start() }
         }
-
-        Window("Magic Keys", id: "config") {
-            ConfigView()
-                .environmentObject(model)
-        }
-        .windowResizability(.contentSize)
     }
 }

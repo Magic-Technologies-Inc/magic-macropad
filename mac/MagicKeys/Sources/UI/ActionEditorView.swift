@@ -1,8 +1,8 @@
 import SwiftUI
 import MagicKeysCore
 
-/// Editor for one gesture slot: action type picker + parameters.
-struct ActionPickerView: View {
+/// Popover editor for one gesture slot: action type + parameters.
+struct ActionEditorView: View {
     let title: String
     @Binding var action: ActionConfig?
 
@@ -28,8 +28,12 @@ struct ActionPickerView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.headline)
+        VStack(alignment: .leading, spacing: 14) {
+            Text(title.uppercased())
+                .font(MagicFont.text(11, weight: .semibold))
+                .kerning(1.4)
+                .foregroundStyle(MagicColor.textSecondary)
+
             Picker("Action", selection: Binding(
                 get: { kind },
                 set: { newKind in
@@ -47,10 +51,13 @@ struct ActionPickerView: View {
                 }
             }
             .labelsHidden()
+            .pickerStyle(.menu)
+
             parameterFields
         }
-        .padding(10)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .controlBackgroundColor)))
+        .font(MagicFont.text(13))
+        .padding(20)
+        .frame(width: 340)
     }
 
     @ViewBuilder
@@ -60,25 +67,31 @@ struct ActionPickerView: View {
             TextField("Bundle ID (e.g. com.apple.Music)", text: Binding(
                 get: { bundleID },
                 set: { action = .openApp(bundleID: $0) }))
+                .textFieldStyle(.roundedBorder)
         case .openURL(let urlString):
             TextField("URL", text: Binding(
                 get: { urlString },
                 set: { action = .openURL(urlString: $0) }))
+                .textFieldStyle(.roundedBorder)
         case .keystroke(let keyCode, let modifiers):
-            HStack {
+            VStack(alignment: .leading, spacing: 10) {
                 TextField("Key code", value: Binding(
                     get: { keyCode },
                     set: { action = .keystroke(keyCode: $0, modifiers: modifiers) }),
                     format: .number)
-                    .frame(width: 80)
-                ForEach(KeyModifier.allCases, id: \.self) { modifier in
-                    Toggle(modifier.rawValue.capitalized, isOn: Binding(
-                        get: { modifiers.contains(modifier) },
-                        set: { on in
-                            var updated = modifiers.filter { $0 != modifier }
-                            if on { updated.append(modifier) }
-                            action = .keystroke(keyCode: keyCode, modifiers: updated)
-                        }))
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 100)
+                HStack(spacing: 12) {
+                    ForEach(KeyModifier.allCases, id: \.self) { modifier in
+                        Toggle(modifier.symbol, isOn: Binding(
+                            get: { modifiers.contains(modifier) },
+                            set: { on in
+                                var updated = modifiers.filter { $0 != modifier }
+                                if on { updated.append(modifier) }
+                                action = .keystroke(keyCode: keyCode, modifiers: updated)
+                            }))
+                            .toggleStyle(.button)
+                    }
                 }
             }
         case .media(let command):
@@ -86,17 +99,21 @@ struct ActionPickerView: View {
                 get: { command },
                 set: { action = .media(command: $0) })) {
                 ForEach(MediaCommand.allCases, id: \.self) { command in
-                    Text(command.rawValue).tag(command)
+                    Text(command.label).tag(command)
                 }
             }
             .labelsHidden()
+            .pickerStyle(.menu)
         case .shellScript(let script):
             TextField("Shell command", text: Binding(
                 get: { script },
                 set: { action = .shellScript(script: $0) }))
+                .textFieldStyle(.roundedBorder)
                 .font(.system(.body, design: .monospaced))
         case nil:
-            EmptyView()
+            Text("This key does nothing on \(title.lowercased()).")
+                .font(MagicFont.text(12))
+                .foregroundStyle(MagicColor.textTertiary)
         }
     }
 }
