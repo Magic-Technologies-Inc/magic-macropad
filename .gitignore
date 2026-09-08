@@ -13,3 +13,6 @@ mac/**/*.swiftpm/xcode/
 
 # macOS
 .DS_Store
+
+# XcodeGen generated project
+mac/MagicKeys.xcodeproj/

@@ -1,0 +1,23 @@
+name: MagicKeys
+options:
+  bundleIdPrefix: io.usemagic
+  deploymentTarget:
+    macOS: "14.0"
+packages:
+  MagicKeysCore:
+    path: MagicKeysCore
+targets:
+  MagicKeys:
+    type: application
+    platform: macOS
+    sources:
+      - path: MagicKeys/Sources
+    dependencies:
+      - package: MagicKeysCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.usemagic.magickeys
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_LSUIElement: YES
+        CODE_SIGN_IDENTITY: "-"
+        SWIFT_VERSION: "5.9"
