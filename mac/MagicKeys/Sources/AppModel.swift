@@ -5,15 +5,23 @@ import MagicKeysCore
 final class AppModel: ObservableObject {
     @Published var isConnected = false
     @Published var deviceInfo: DeviceInfo?
+    @Published var lastGesture: Gesture?
 
     let configStore = ConfigStore()
     private let hidService = HIDService()
+    private var pipeline: GesturePipeline?
 
     func start() {
+        pipeline = makePipeline()
+
         hidService.onConnectionChange = { [weak self] connected in
             Task { @MainActor in
                 self?.isConnected = connected
-                if !connected { self?.deviceInfo = nil }
+                if !connected {
+                    self?.deviceInfo = nil
+                    // Drop in-flight gesture state (spec: reset on disconnect).
+                    self?.pipeline = self?.makePipeline()
+                }
             }
         }
         hidService.onMessage = { [weak self] message in
@@ -22,13 +30,34 @@ final class AppModel: ObservableObject {
         hidService.start()
     }
 
+    private func makePipeline() -> GesturePipeline {
+        let pipeline = GesturePipeline(timing: configStore.config.timing)
+        pipeline.onGesture = { [weak self] gesture in
+            self?.lastGesture = gesture
+            NSLog("MagicKeys: gesture \(gesture)")
+            // ActionEngine executes these in Task 9.
+        }
+        return pipeline
+    }
+
     private func handle(_ message: K1Message) {
         switch message {
-        case .info(let info):
-            deviceInfo = info
-        case .keyEvent(let event):
-            NSLog("MagicKeys: key \(event.key) \(event.isDown ? "down" : "up")")
-            // GesturePipeline consumes these in Task 8.
+        case .info(let info): deviceInfo = info
+        case .keyEvent(let event): pipeline?.handle(event)
         }
     }
+
+    #if DEBUG
+    private var virtualSeq: UInt8 = 0
+    /// Simulates a physical press: down now, up after `duration`.
+    func simulatePress(key: Int, duration: TimeInterval = 0.1) {
+        virtualSeq &+= 1
+        pipeline?.handle(KeyEvent(key: key, isDown: true, seq: virtualSeq))
+        virtualSeq &+= 1
+        let seq = virtualSeq
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
+            self?.pipeline?.handle(KeyEvent(key: key, isDown: false, seq: seq))
+        }
+    }
+    #endif
 }

@@ -16,6 +16,21 @@ struct MagicKeysApp: App {
                 openWindow(id: "config")
                 NSApp.activate(ignoringOtherApps: true)
             }
+            #if DEBUG
+            Divider()
+            Menu("Virtual K1") {
+                ForEach(0..<3, id: \.self) { key in
+                    Button("Key \(key + 1): tap") { model.simulatePress(key: key) }
+                    Button("Key \(key + 1): double tap") {
+                        model.simulatePress(key: key)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            model.simulatePress(key: key)
+                        }
+                    }
+                    Button("Key \(key + 1): hold") { model.simulatePress(key: key, duration: 0.6) }
+                }
+            }
+            #endif
             Divider()
             Button("Quit Magic Keys") { NSApp.terminate(nil) }
         } label: {
