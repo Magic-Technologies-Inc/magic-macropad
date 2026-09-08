@@ -14,6 +14,9 @@ public enum MediaCommand: String, Codable, CaseIterable, Sendable {
     case playPause, volumeUp, volumeDown, mute
 }
 
+/// Persisted to disk as JSON via synthesized Codable: case names and associated-value
+/// labels ARE the wire format. Renaming any of them breaks existing config files —
+/// add explicit CodingKeys before renaming.
 public enum ActionConfig: Codable, Equatable, Sendable {
     case openApp(bundleID: String)
     case openURL(urlString: String)
@@ -47,6 +50,11 @@ public struct GestureTiming: Codable, Equatable, Sendable {
 public struct K1Config: Codable, Equatable, Sendable {
     public var keys: [KeyBinding]
     public var timing: GestureTiming
+
+    public init(keys: [KeyBinding], timing: GestureTiming) {
+        self.keys = keys
+        self.timing = timing
+    }
 
     public static func makeDefault() -> K1Config {
         K1Config(keys: Array(repeating: KeyBinding(), count: K1Protocol.keyCount),
