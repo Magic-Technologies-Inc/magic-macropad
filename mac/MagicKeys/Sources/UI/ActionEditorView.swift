@@ -1,9 +1,9 @@
 import SwiftUI
 import MagicKeysCore
 
-/// Popover editor for one gesture slot: action type + parameters.
+/// Inline editor for one gesture slot: action type + parameters. Rendered inside
+/// the expanded GestureCard (no popover — see GestureCard).
 struct ActionEditorView: View {
-    let title: String
     @Binding var action: ActionConfig?
 
     private enum Kind: String, CaseIterable, Identifiable {
@@ -28,36 +28,38 @@ struct ActionEditorView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(title.uppercased())
-                .font(MagicFont.text(11, weight: .semibold))
-                .kerning(1.4)
-                .foregroundStyle(MagicColor.textSecondary)
-
-            Picker("Action", selection: Binding(
-                get: { kind },
-                set: { newKind in
-                    switch newKind {
-                    case .none: action = nil
-                    case .openApp: action = .openApp(bundleID: "")
-                    case .openURL: action = .openURL(urlString: "")
-                    case .keystroke: action = .keystroke(keyCode: 0, modifiers: [])
-                    case .media: action = .media(command: .playPause)
-                    case .shellScript: action = .shellScript(script: "")
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("ACTION")
+                    .font(MagicFont.text(10, weight: .semibold))
+                    .kerning(1.3)
+                    .foregroundStyle(MagicColor.textTertiary)
+                Spacer()
+                Picker("Action", selection: Binding(
+                    get: { kind },
+                    set: { newKind in
+                        switch newKind {
+                        case .none: action = nil
+                        case .openApp: action = .openApp(bundleID: "")
+                        case .openURL: action = .openURL(urlString: "")
+                        case .keystroke: action = .keystroke(keyCode: 0, modifiers: [])
+                        case .media: action = .media(command: .playPause)
+                        case .shellScript: action = .shellScript(script: "")
+                        }
+                    })) {
+                    ForEach(Kind.allCases) { kind in
+                        Text(kind.rawValue).tag(kind)
                     }
-                })) {
-                ForEach(Kind.allCases) { kind in
-                    Text(kind.rawValue).tag(kind)
                 }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .fixedSize()
             }
-            .labelsHidden()
-            .pickerStyle(.menu)
-
             parameterFields
         }
         .font(MagicFont.text(13))
-        .padding(20)
-        .frame(width: 340)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
     }
 
     @ViewBuilder
@@ -75,13 +77,17 @@ struct ActionEditorView: View {
                 .textFieldStyle(.roundedBorder)
         case .keystroke(let keyCode, let modifiers):
             VStack(alignment: .leading, spacing: 10) {
-                TextField("Key code", value: Binding(
-                    get: { keyCode },
-                    set: { action = .keystroke(keyCode: $0, modifiers: modifiers) }),
-                    format: .number)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 100)
-                HStack(spacing: 12) {
+                HStack(spacing: 8) {
+                    Text("Key code")
+                        .foregroundStyle(MagicColor.textSecondary)
+                    TextField("0", value: Binding(
+                        get: { keyCode },
+                        set: { action = .keystroke(keyCode: $0, modifiers: modifiers) }),
+                        format: .number)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 70)
+                }
+                HStack(spacing: 8) {
                     ForEach(KeyModifier.allCases, id: \.self) { modifier in
                         Toggle(modifier.symbol, isOn: Binding(
                             get: { modifiers.contains(modifier) },
@@ -104,6 +110,7 @@ struct ActionEditorView: View {
             }
             .labelsHidden()
             .pickerStyle(.menu)
+            .fixedSize()
         case .shellScript(let script):
             TextField("Shell command", text: Binding(
                 get: { script },
@@ -111,7 +118,7 @@ struct ActionEditorView: View {
                 .textFieldStyle(.roundedBorder)
                 .font(.system(.body, design: .monospaced))
         case nil:
-            Text("This key does nothing on \(title.lowercased()).")
+            Text("This gesture does nothing.")
                 .font(MagicFont.text(12))
                 .foregroundStyle(MagicColor.textTertiary)
         }

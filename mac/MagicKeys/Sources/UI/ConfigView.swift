@@ -4,6 +4,7 @@ import MagicKeysCore
 struct ConfigView: View {
     @EnvironmentObject private var model: AppModel
     @State private var selectedKey = 0
+    @State private var expandedSlot: Int?  // 0=tap, 1=doubleTap, 2=hold
 
     var body: some View {
         HStack(spacing: 0) {
@@ -62,36 +63,43 @@ struct ConfigView: View {
     // MARK: Right — bindings for the selected key
 
     private var bindingsPane: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("KEY \(selectedKey + 1)")
-                    .font(MagicFont.display(24, bold: true))
-                    .foregroundStyle(MagicColor.textPrimary)
-                Text("Choose what each gesture does.")
-                    .font(MagicFont.text(12))
-                    .foregroundStyle(MagicColor.textSecondary)
-            }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("KEY \(selectedKey + 1)")
+                        .font(MagicFont.display(24, bold: true))
+                        .foregroundStyle(MagicColor.textPrimary)
+                    Text("Choose what each gesture does.")
+                        .font(MagicFont.text(12))
+                        .foregroundStyle(MagicColor.textSecondary)
+                }
 
-            VStack(spacing: 12) {
-                GestureCard(title: "Tap", gestureIcon: "hand.tap",
-                            action: binding(\.tap))
-                GestureCard(title: "Double Tap", gestureIcon: "hand.tap.fill",
-                            action: binding(\.doubleTap))
-                GestureCard(title: "Hold", gestureIcon: "hand.raised",
-                            action: binding(\.hold))
-            }
+                VStack(spacing: 12) {
+                    GestureCard(title: "Tap", gestureIcon: "hand.tap",
+                                action: binding(\.tap), isExpanded: slotBinding(0))
+                    GestureCard(title: "Double Tap", gestureIcon: "hand.tap.fill",
+                                action: binding(\.doubleTap), isExpanded: slotBinding(1))
+                    GestureCard(title: "Hold", gestureIcon: "hand.raised",
+                                action: binding(\.hold), isExpanded: slotBinding(2))
+                }
 
-            Spacer()
-
-            #if DEBUG
-            if !model.isConnected {
-                Text("No K1 attached — use the menu-bar icon's Virtual K1 to simulate presses.")
-                    .font(MagicFont.text(11))
-                    .foregroundStyle(MagicColor.textTertiary)
+                #if DEBUG
+                if !model.isConnected {
+                    Text("No K1 attached — use the menu-bar icon's Virtual K1 to simulate presses.")
+                        .font(MagicFont.text(11))
+                        .foregroundStyle(MagicColor.textTertiary)
+                }
+                #endif
             }
-            #endif
+            .padding(28)
         }
-        .padding(36)
+    }
+
+    /// Accordion: expanding one slot collapses the others.
+    private func slotBinding(_ slot: Int) -> Binding<Bool> {
+        Binding(
+            get: { expandedSlot == slot },
+            set: { expandedSlot = $0 ? slot : nil })
     }
 
     private func binding(_ keyPath: WritableKeyPath<KeyBinding, ActionConfig?>) -> Binding<ActionConfig?> {

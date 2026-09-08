@@ -16,7 +16,7 @@ changing the protocol or architecture.
 
 ## Layout
 
-- `cad/` — OpenSCAD enclosure concept + STLs/renders (v0.1, placeholder dims; still models 4 keys)
+- `cad/` — OpenSCAD enclosure (`k1_v1_parts.scad` v0.6: 3 keys, recessed MX switch well, drop-in lid) + STLs/renders; body/plug dims still placeholders until the MacBook is measured
 - `firmware/` — ESP-IDF 5.x + TinyUSB (`esp_tinyusb`) vendor-HID device
 - `mac/` — Magic Keys, SwiftUI menu-bar app (macOS 14+, `IOHIDManager`)
 - `docs/superpowers/specs/` — design specs
@@ -30,8 +30,7 @@ changing the protocol or architecture.
 - **Keep the four Mac app units isolated:** HIDService (only unit touching
   IOKit), GestureEngine (pure logic, unit-tested), ActionEngine (`MagicAction`
   protocol), ConfigStore (Codable JSON in Application Support).
-- **Key count is 3.** The CAD's `key_count = 4` is stale — don't propagate 4
-  anywhere in firmware or app.
+- **Key count is 3** everywhere: CAD, firmware, and app.
 - Dev USB IDs: VID `0x1209` (pid.codes) + test PID until Magic has its own VID.
 
 ## Build

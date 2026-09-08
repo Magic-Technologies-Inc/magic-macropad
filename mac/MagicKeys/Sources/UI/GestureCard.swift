@@ -51,20 +51,41 @@ extension MediaCommand {
     }
 }
 
-/// One gesture slot (Tap / Double Tap / Hold) shown as a card. Clicking it
-/// opens the action editor in a popover.
+/// One gesture slot (Tap / Double Tap / Hold). Tapping the header expands the
+/// action editor *inline* — never a nested popover, which a menu-bar panel
+/// (itself an NSPopover) would dismiss on sight.
 struct GestureCard: View {
     let title: String
     let gestureIcon: String
     @Binding var action: ActionConfig?
-    @State private var isEditing = false
+    @Binding var isExpanded: Bool
     @State private var isHovered = false
 
     private var isAssigned: Bool { action != nil }
 
     var body: some View {
+        VStack(spacing: 0) {
+            header
+            if isExpanded {
+                Divider().padding(.horizontal, 14)
+                ActionEditorView(action: $action)
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(MagicColor.surfaceCard)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(isExpanded ? MagicColor.cerulean.opacity(0.4)
+                              : (isHovered ? MagicColor.slate300.opacity(0.5) : MagicColor.borderHairline),
+                              lineWidth: 1)
+        )
+    }
+
+    private var header: some View {
         Button {
-            isEditing.toggle()
+            withAnimation(.easeOut(duration: 0.16)) { isExpanded.toggle() }
         } label: {
             HStack(spacing: 14) {
                 ZStack {
@@ -90,24 +111,14 @@ struct GestureCard: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(MagicColor.textTertiary)
+                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(MagicColor.surfaceCard)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(isHovered ? MagicColor.slate300.opacity(0.5) : MagicColor.borderHairline,
-                                  lineWidth: 1)
-            )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .animation(.easeOut(duration: 0.12), value: isHovered)
-        .popover(isPresented: $isEditing, arrowEdge: .trailing) {
-            ActionEditorView(title: title, action: $action)
-        }
     }
 }

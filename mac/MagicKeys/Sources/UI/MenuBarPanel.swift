@@ -17,6 +17,13 @@ struct MenuBarPanel: View {
         }
         .frame(width: 820, height: 560)
         .background(MagicColor.surfacePage)
+        .onAppear {
+            // A menu-bar popover won't accept keyboard input (typing into the
+            // action fields) unless the app is active. Activate on open.
+            DispatchQueue.main.async {
+                NSApp.activate(ignoringOtherApps: true)
+            }
+        }
     }
 
     private var footer: some View {
