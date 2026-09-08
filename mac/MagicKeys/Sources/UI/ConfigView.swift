@@ -8,13 +8,13 @@ struct ConfigView: View {
     var body: some View {
         HStack(spacing: 0) {
             devicePane
-                .frame(width: 400)
+                .frame(width: 300)
                 .frame(maxHeight: .infinity)
             bindingsPane
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .background(MagicColor.surfacePage)
         }
-        .frame(minWidth: 940, maxWidth: 1100, minHeight: 620, maxHeight: 760)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: Left — the device on its backdrop
@@ -26,19 +26,19 @@ struct ConfigView: View {
                 colors: [MagicColor.sky.opacity(0.18), .clear],
                 center: .init(x: 0.5, y: 0.42), startRadius: 40, endRadius: 340)
 
-            VStack(spacing: 28) {
-                VStack(spacing: 6) {
+            VStack(spacing: 20) {
+                VStack(spacing: 4) {
                     Text("K1")
-                        .font(MagicFont.display(40, bold: true))
+                        .font(MagicFont.display(32, bold: true))
                         .foregroundStyle(MagicColor.textPrimary)
                     Text("Magic Keys")
-                        .font(MagicFont.text(13, weight: .medium))
+                        .font(MagicFont.text(12, weight: .medium))
                         .foregroundStyle(MagicColor.textSecondary)
                 }
                 DeviceView(selectedKey: $selectedKey)
                 statusPill
             }
-            .padding(.vertical, 36)
+            .padding(.vertical, 24)
         }
     }
 
@@ -62,13 +62,13 @@ struct ConfigView: View {
     // MARK: Right — bindings for the selected key
 
     private var bindingsPane: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("KEY \(selectedKey + 1)")
-                    .font(MagicFont.display(28, bold: true))
+                    .font(MagicFont.display(24, bold: true))
                     .foregroundStyle(MagicColor.textPrimary)
                 Text("Choose what each gesture does.")
-                    .font(MagicFont.text(13))
+                    .font(MagicFont.text(12))
                     .foregroundStyle(MagicColor.textSecondary)
             }
 

@@ -21,5 +21,6 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: io.usemagic.magickeys
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Magic Keys
+        INFOPLIST_KEY_LSUIElement: YES   # menu-bar app, no Dock icon
         CODE_SIGN_IDENTITY: "-"          # ad-hoc signing for dev builds
         SWIFT_VERSION: "5.9"

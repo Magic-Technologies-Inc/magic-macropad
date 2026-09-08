@@ -17,9 +17,8 @@ enum Snapshot {
         }
 
         func render(_ colorScheme: ColorScheme, to url: URL) {
-            let view = ConfigView()
+            let view = MenuBarPanel()
                 .environmentObject(model)
-                .frame(width: 960, height: 660)
                 .environment(\.colorScheme, colorScheme)
             let renderer = ImageRenderer(content: view)
             renderer.scale = 2

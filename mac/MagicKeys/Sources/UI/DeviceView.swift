@@ -10,14 +10,14 @@ struct DeviceView: View {
     var body: some View {
         ZStack {
             deviceBody
-            VStack(spacing: 18) {
+            VStack(spacing: 16) {
                 ForEach(0..<3, id: \.self) { key in
                     keyCap(key)
                 }
             }
-            .padding(.top, 26)
+            .padding(.top, 20)
         }
-        .frame(width: 128, height: 396)
+        .frame(width: 108, height: 330)
     }
 
     private var deviceBody: some View {
@@ -35,8 +35,8 @@ struct DeviceView: View {
                 // USB-C plug stub, near the rear (top) on the laptop-facing side.
                 RoundedRectangle(cornerRadius: 2.5, style: .continuous)
                     .fill(Color(hex: 0x3A444C))
-                    .frame(width: 10, height: 34)
-                    .offset(x: 8, y: 42)
+                    .frame(width: 9, height: 30)
+                    .offset(x: 7, y: 36)
             }
             .shadow(color: .black.opacity(0.45), radius: 28, y: 18)
     }
@@ -63,12 +63,12 @@ struct DeviceView: View {
                 )
                 .overlay(
                     Text("\(key + 1)")
-                        .font(MagicFont.display(26))
+                        .font(MagicFont.display(23))
                         .foregroundStyle(isSelected ? MagicColor.dawn : Color(hex: 0x68757F))
                 )
-                .frame(width: 88, height: 88)
+                .frame(width: 74, height: 74)
                 .shadow(color: isSelected ? MagicColor.dawn.opacity(0.35) : .clear,
-                        radius: 16)
+                        radius: 14)
         }
         .buttonStyle(.plain)
         .onHover { hovering in hoveredKey = hovering ? key : (hoveredKey == key ? nil : hoveredKey) }
