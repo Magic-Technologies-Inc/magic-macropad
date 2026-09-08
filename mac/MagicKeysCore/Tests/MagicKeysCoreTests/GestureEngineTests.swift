@@ -80,4 +80,26 @@ final class GestureEngineTests: XCTestCase {
     func testOutOfRangeKeyIsIgnored() {
         XCTAssertEqual(engine.handle(KeyEvent(key: 9, isDown: true, seq: 0), at: 0), [])
     }
+
+    func testLateSecondPressIsNotADoubleTap() {
+        _ = down(0, at: 0.0)
+        _ = up(0, at: 0.1)            // window deadline: 0.4
+        // Timer never fired; a new press arrives after the window lapsed.
+        XCTAssertEqual(down(0, at: 0.9), [.tap(key: 0)])  // first press resolves as tap
+        XCTAssertEqual(up(0, at: 1.0), [])                 // new press is a fresh first tap...
+        XCTAssertEqual(engine.expire(at: 1.3), [.tap(key: 0)])  // ...that resolves via expire
+    }
+
+    func testDuplicateDownEventsAreIgnored() {
+        _ = down(0, at: 0.0)
+        XCTAssertEqual(down(0, at: 0.05), [])  // HID repeat — must not reset hold timer
+        XCTAssertEqual(engine.nextDeadline, 0.4)  // still 0.0 + 0.4
+        _ = up(0, at: 0.1)
+        XCTAssertEqual(engine.expire(at: 0.4), [.tap(key: 0)])
+    }
+
+    func testStrayUpWhileIdleIsIgnored() {
+        XCTAssertEqual(up(0, at: 0.0), [])
+        XCTAssertNil(engine.nextDeadline)
+    }
 }
