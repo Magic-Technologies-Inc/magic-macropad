@@ -26,7 +26,8 @@ body_len  = 115;   // rear (port) to laptop front edge
 body_wid  = 22;
 body_rad  = 3;
 
-wall       = 2;    // lower walls (electronics cavity)
+wall       = 3.25; // lower walls; with wall_upper this leaves a 2mm ledge
+                   // per side, wide enough to carry the board seat
 wall_upper = 1.25; // thinner walls above the ledge -> wider key well
 floor_th   = 1.5;
 cav_depth  = 7;    // below-plate room: 5 switch + 2 for clipped pins & solder
@@ -52,6 +53,18 @@ snap_xs    = [50];   // front of the deck only
 pivot_x    = 38;     // ledge support ends here; relieved rearward
 relief     = 1.6;    // rear dip travel (drives the front lift)
 
+/* ---------- RP2040-Zero board seat ----------
+   The board bridges the cavity, resting its long edges on the widened
+   ledges in a shallow pocket (floor level = relieved ledge height, so
+   PCB top sits ~0.6 below the lid). A pocket in the deck underside
+   clears the top-side USB connector and components. Nominal board
+   18 x 23.5 x 1mm PCB — verify with calipers before printing. */
+seat_x0     = 30;     // rear edge of the seat (board USB-C faces rear)
+seat_len    = 24;
+seat_wid    = 18.5;
+seat_depth  = relief; // shares the relieved-ledge height
+comp_pocket = 3;      // depth of the deck underside pocket over the board
+
 /* ---------- Keys (MX) ---------- */
 key_count       = 3;
 key_pitch       = 19;    // MX standard
@@ -71,8 +84,8 @@ cap_overlap = 1;    // skirt drop below the housing top when seated
 
 /* ---------- USB-C slot (inner wall, near rear) ---------- */
 plug_from_rear = 12;   // slot center from rear end
-slot_w = 10.5;         // fits a male USB-C breakout plug
-slot_h = 4;
+slot_w = 12;           // sized for the 90-degree adapter's plug base
+slot_h = 5;
 slot_z = (body_ht - slot_h) / 2; // slot centered on body height for now;
                                  // final height = MacBook port center above
                                  // desk (measure!), matched by the adapter
@@ -127,6 +140,9 @@ module tray() {
         // ledge relief rear of the pivot so the lid can rock down there
         translate([wall_upper, wall_upper, tray_ht - relief])
             cube([pivot_x - wall_upper, well_wid, relief + 0.01]);
+        // board seat pocket cut into the ledges (locates the RP2040-Zero)
+        translate([seat_x0, (body_wid - seat_wid) / 2, tray_ht - seat_depth])
+            cube([seat_len, seat_wid, seat_depth + 0.01]);
     }
 }
 
@@ -152,6 +168,9 @@ module lid() {
                     rotate([0, 90, 0])
                         cylinder(h = snap_len, r = snap_r);
         }
+        // deck underside pocket over the board's USB connector/components
+        translate([seat_x0, (body_wid - seat_wid) / 2 + 0.5, -1])
+            cube([seat_len, seat_wid - 1, comp_pocket + 1]);
         // tunnel over the USB slot so the plug/adapter can pass the lid
         // (open at the inner edge and below; deck top stays closed)
         translate([plug_from_rear - usb_notch_w / 2, -1, -1])
@@ -174,11 +193,22 @@ module switch_mock() {
     }
 }
 
+// Mock RP2040-Zero for assembly views only (not exported)
+module board_mock() {
+    color("darkgreen")
+        translate([seat_x0 + 0.25, (body_wid - 18) / 2, tray_ht - seat_depth])
+            cube([23.5, 18, 1]);
+    color("silver") // top-side USB-C, facing rear
+        translate([seat_x0 + 0.25, (body_wid - 8.9) / 2, tray_ht - seat_depth + 1])
+            cube([7, 8.9, 3.2]);
+}
+
 /* ---------- Views ---------- */
 
 module assembly(explode = 0) {
     plate_top = tray_ht + lid_th;
     tray();
+    board_mock();
     translate([0, 0, tray_ht + explode]) lid();
     for (i = [0 : key_count - 1]) {
         translate([key_cx(i), body_wid / 2, plate_top + explode])
