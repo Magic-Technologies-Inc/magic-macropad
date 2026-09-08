@@ -1,12 +1,13 @@
 # K1 Project Summary
 
-**Last updated:** 2026-09-07
+**Last updated:** 2026-09-08
 
 ## What K1 is
 
 K1 ("Keys v1") is a Magic hardware product: a thin **3-key** macro pad that plugs
 into a MacBook's side USB-C port and sits flush along the chassis edge, running
-toward the front. It is built on an **ESP32-S3** and is **app-required** — the
+toward the front. It is built on an **RP2040** (RP2040-Zero board) and is
+**app-required** — the
 device sends raw key events over USB and does nothing without the companion Mac
 app, **Magic Keys**, which detects gestures and runs the user's configured
 actions.
@@ -18,7 +19,8 @@ actions.
 | Key count | 3 (CAD still shows 4 — pending update) |
 | Device model | App-required; no standalone HID-keyboard fallback |
 | Transport | Native USB, vendor-defined HID (usage page `0xFF60`), 8-byte reports |
-| Firmware stack | ESP-IDF 5.x + TinyUSB (`esp_tinyusb`) |
+| Firmware stack | Pico SDK 2.x + TinyUSB (was ESP-IDF/ESP32-S3 — ported 2026-09-08) |
+| Board | RP2040-Zero (Waveshare design, hiBCTR clones); keys on GPIO 26/27/28 |
 | Gesture logic | Entirely in the Mac app (tap / double-tap / hold); firmware sends only down/up |
 | Mac app | SwiftUI menu-bar app, macOS 14+, `IOHIDManager` |
 | Config UI | Logitech Options-style: device render, click a key, assign actions per gesture |
@@ -39,10 +41,14 @@ actions.
 - ✅ Architecture designed and spec approved:
   [docs/superpowers/specs/2026-09-07-k1-firmware-and-mac-app-design.md](docs/superpowers/specs/2026-09-07-k1-firmware-and-mac-app-design.md)
 - ✅ Implementation plans (firmware + Mac app, in docs/superpowers/plans/)
-- ✅ Firmware: vendor-HID device with debounced key events + GET_INFO (build-verified; flash + enumeration pending hardware)
+- ✅ Firmware: vendor-HID device with debounced key events + GET_INFO, ported
+  to RP2040-Zero / Pico SDK (build-verified UF2; flash + enumeration pending
+  hardware bring-up — spec: docs/superpowers/specs/2026-09-08-rp2040-port-design.md)
 - ✅ Magic Keys app: HID pipeline, gesture engine, action engine, config UI, virtual K1
 - 🔶 Hardware-in-loop smoke test written (run pending hardware)
 - ⬜ CAD update 4 → 3 keys; real measurements
+- ⬜ CAD: board pocket rework for the RP2040-Zero footprint (~18×23.5 mm,
+  different pad layout than the XIAO the v2 CAD models)
 
 ## Explicitly out of scope for v1
 

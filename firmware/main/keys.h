@@ -1,7 +1,10 @@
 #pragma once
-#include "freertos/FreeRTOS.h"
-#include "freertos/queue.h"
+#include "pico/util/queue.h"
 
-// Starts the 1 kHz scan task. Debounced key events are posted to the
-// returned queue as k1_key_event_t (see protocol.h).
-QueueHandle_t k1_keys_start(void);
+// Configures the key GPIOs and returns the debounced-event queue
+// (entries are k1_key_event_t, see protocol.h).
+queue_t *k1_keys_init(void);
+
+// Call from the main loop. Self-paces to a 1 kHz scan; on each tick it
+// samples the keys, debounces, and queues state changes.
+void k1_keys_poll(void);

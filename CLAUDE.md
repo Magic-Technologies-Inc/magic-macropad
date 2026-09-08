@@ -4,8 +4,8 @@ Guidance for Claude Code when working in the K1 repo.
 
 ## What this is
 
-K1 is a thin **3-key** macro pad on an **ESP32-S3** that plugs into a MacBook's
-side USB-C port. It is **app-required**: firmware sends raw key down/up events
+K1 is a thin **3-key** macro pad on an **RP2040** (RP2040-Zero board) that
+plugs into a MacBook's side USB-C port. It is **app-required**: firmware sends raw key down/up events
 over a vendor-defined USB HID interface (usage page `0xFF60`, 8-byte reports);
 the **Magic Keys** Mac app does all gesture detection (tap / double-tap / hold)
 and action execution, with a Logitech-Options-style config UI.
@@ -17,7 +17,8 @@ changing the protocol or architecture.
 ## Layout
 
 - `cad/` — OpenSCAD enclosure, one folder per revision: `v0/` (first one-piece sketch), `v1/` (flat 2-part design — lid on top, switch housings exposed; includes its slicer project), `v2/` (`k1_v2.scad`, current — recessed key well keeps the keys flush, drop-in lid with raised deck). Body/plug dims still placeholders until the MacBook is measured
-- `firmware/` — ESP-IDF 5.x + TinyUSB (`esp_tinyusb`) vendor-HID device
+- `firmware/` — Pico SDK + TinyUSB vendor-HID device (RP2040-Zero; see
+  `docs/superpowers/specs/2026-09-08-rp2040-port-design.md`)
 - `mac/` — Magic Keys, SwiftUI menu-bar app (macOS 14+, `IOHIDManager`)
 - `docs/superpowers/specs/` — design specs
 
@@ -35,6 +36,7 @@ changing the protocol or architecture.
 
 ## Build
 
-- Firmware: standard ESP-IDF flow (`idf.py build flash monitor`) from `firmware/`.
+- Firmware: Pico SDK flow from `firmware/` (`cmake -B build -G Ninja && ninja -C build`,
+  flash the UF2 via BOOTSEL or `picotool`; see `firmware/README.md`).
 - Mac app: Xcode project in `mac/`.
 - Hardware-in-loop smoke test: Python `hidapi` script (see spec's Testing section).

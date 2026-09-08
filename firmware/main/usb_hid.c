@@ -1,12 +1,8 @@
 #include "usb_hid.h"
 #include "protocol.h"
-#include "esp_log.h"
-#include "freertos/task.h"
-#include "tinyusb.h"
-#include "class/hid/hid_device.h"
+#include "tusb.h"
+#include <stdio.h>
 #include <string.h>
-
-static const char *TAG = "k1_usb";
 
 // ---- Descriptors -----------------------------------------------------------
 
@@ -48,10 +44,10 @@ static const tusb_desc_device_t k1_device_descriptor = {
 };
 
 static const char *k1_string_descriptor[] = {
-    (const char[]){0x09, 0x04},  // 0: English (US)
-    "Magic",                     // 1: manufacturer
-    "K1",                        // 2: product
-    "K1-DEV-0001",               // 3: serial
+    NULL,           // 0: language, handled specially in the callback
+    "Magic",        // 1: manufacturer
+    "K1",           // 2: product
+    "K1-DEV-0001",  // 3: serial
 };
 
 enum { ITF_NUM_HID = 0, ITF_NUM_TOTAL };
@@ -66,7 +62,45 @@ static const uint8_t k1_configuration_descriptor[] = {
                              K1_REPORT_SIZE, 5 /* poll ms */),
 };
 
-// ---- TinyUSB HID callbacks -------------------------------------------------
+// ---- TinyUSB device callbacks ----------------------------------------------
+// (esp_tinyusb supplied these from its config struct; on the Pico SDK we
+// implement them directly.)
+
+uint8_t const *tud_descriptor_device_cb(void)
+{
+    return (uint8_t const *)&k1_device_descriptor;
+}
+
+uint8_t const *tud_descriptor_configuration_cb(uint8_t index)
+{
+    (void)index;
+    return k1_configuration_descriptor;
+}
+
+uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid)
+{
+    (void)langid;
+    static uint16_t desc[32];
+    uint8_t len;
+
+    if (index == 0) {
+        desc[1] = 0x0409;  // English (US)
+        len = 1;
+    } else {
+        if (index >= sizeof(k1_string_descriptor) / sizeof(k1_string_descriptor[0]))
+            return NULL;
+        const char *s = k1_string_descriptor[index];
+        len = (uint8_t)strlen(s);
+        if (len > 31)
+            len = 31;
+        for (uint8_t i = 0; i < len; i++)
+            desc[1 + i] = (uint16_t)s[i];  // ASCII -> UTF-16LE
+    }
+    desc[0] = (uint16_t)((TUSB_DESC_STRING << 8) | (2 * len + 2));
+    return desc;
+}
+
+// ---- HID callbacks ---------------------------------------------------------
 
 static uint8_t s_seq;
 static volatile bool s_info_requested;
@@ -91,10 +125,10 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id,
 {
     (void)instance; (void)report_id; (void)report_type;
     if (bufsize >= 1 && buffer[0] == K1_MSG_GET_INFO)
-        s_info_requested = true;  // answered from the report task, not this callback context
+        s_info_requested = true;  // answered from k1_usb_task, not this callback context
 }
 
-// ---- Report task -----------------------------------------------------------
+// ---- Report pump -----------------------------------------------------------
 
 // Seq only advances on a successful send, so host-side gap detection flags
 // real USB losses, not benign drops while the host isn't polling.
@@ -105,44 +139,35 @@ static void send_report(uint8_t msg, uint8_t b1, uint8_t b2,
     if (tud_hid_report(0, report, sizeof(report)))
         s_seq++;
     else
-        ESP_LOGW(TAG, "report dropped (host not ready)");
+        printf("k1_usb: report dropped (host not ready)\n");
 }
 
 // Best-effort delivery: while the host isn't polling, key events pile up in
-// the 32-slot queue and the oldest overflow is dropped by the scan task.
-static void report_task(void *arg)
+// the 32-slot queue and overflow is dropped by the scan side. One report per
+// call — the IN endpoint fits one transfer at a time and the main loop spins
+// far faster than the host polls.
+void k1_usb_task(queue_t *key_queue)
 {
-    QueueHandle_t key_queue = (QueueHandle_t)arg;
-    k1_key_event_t ev;
-    for (;;) {
-        if (s_info_requested && tud_hid_ready()) {
-            s_info_requested = false;
-            send_report(K1_MSG_INFO, 0, 0,
-                        K1_FW_VERSION_MAJOR, K1_FW_VERSION_MINOR,
-                        K1_KEY_COUNT, 0);
-        }
-        // Only dequeue when the interface can take a report, so a stalled
-        // key-event send never starves a pending GET_INFO reply.
-        if (!tud_hid_ready()) {
-            vTaskDelay(pdMS_TO_TICKS(10));
-            continue;
-        }
-        if (xQueueReceive(key_queue, &ev, pdMS_TO_TICKS(10)) == pdTRUE)
-            send_report(K1_MSG_KEY_EVENT, ev.key, ev.state, 0, 0, 0, 0);
+    tud_task();
+
+    if (!tud_hid_ready())
+        return;
+    // Answer a pending GET_INFO before key events, so a backlog of key
+    // events never starves the info reply.
+    if (s_info_requested) {
+        s_info_requested = false;
+        send_report(K1_MSG_INFO, 0, 0,
+                    K1_FW_VERSION_MAJOR, K1_FW_VERSION_MINOR,
+                    K1_KEY_COUNT, 0);
+        return;
     }
+    k1_key_event_t ev;
+    if (queue_try_remove(key_queue, &ev))
+        send_report(K1_MSG_KEY_EVENT, ev.key, ev.state, 0, 0, 0, 0);
 }
 
-void k1_usb_start(QueueHandle_t key_queue)
+void k1_usb_init(void)
 {
-    const tinyusb_config_t tusb_cfg = {
-        .device_descriptor = &k1_device_descriptor,
-        .string_descriptor = k1_string_descriptor,
-        .string_descriptor_count =
-            sizeof(k1_string_descriptor) / sizeof(k1_string_descriptor[0]),
-        .external_phy = false,
-        .configuration_descriptor = k1_configuration_descriptor,
-    };
-    ESP_ERROR_CHECK(tinyusb_driver_install(&tusb_cfg));
-    xTaskCreate(report_task, "k1_usb_report", 4096, key_queue, 9, NULL);
-    ESP_LOGI(TAG, "USB HID started (VID %04x PID %04x)", K1_USB_VID, K1_USB_PID);
+    tusb_init();
+    printf("k1_usb: USB HID started (VID %04x PID %04x)\n", K1_USB_VID, K1_USB_PID);
 }
