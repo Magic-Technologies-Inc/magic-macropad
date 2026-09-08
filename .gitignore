@@ -18,3 +18,6 @@ mac/**/*.swiftpm/xcode/
 # XcodeGen generated project
 mac/MagicKeys.xcodeproj/
 firmware/sdkconfig
+
+# Firmware tooling
+firmware/tools/.venv/
