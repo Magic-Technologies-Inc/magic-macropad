@@ -1,5 +1,6 @@
 import SwiftUI
 import MagicKeysCore
+import ServiceManagement
 
 @main
 struct MagicKeysApp: App {
@@ -16,6 +17,16 @@ struct MagicKeysApp: App {
                 openWindow(id: "config")
                 NSApp.activate(ignoringOtherApps: true)
             }
+            Toggle("Launch at Login", isOn: Binding(
+                get: { SMAppService.mainApp.status == .enabled },
+                set: { enable in
+                    do {
+                        if enable { try SMAppService.mainApp.register() }
+                        else { try SMAppService.mainApp.unregister() }
+                    } catch {
+                        NSLog("MagicKeys: launch-at-login failed: \(error)")
+                    }
+                }))
             #if DEBUG
             Divider()
             Menu("Virtual K1") {

@@ -40,7 +40,7 @@ actions.
   [docs/superpowers/specs/2026-09-07-k1-firmware-and-mac-app-design.md](docs/superpowers/specs/2026-09-07-k1-firmware-and-mac-app-design.md)
 - ⬜ Implementation plan
 - ⬜ Firmware scaffold (protocol first — the app consumes it)
-- ⬜ Magic Keys app scaffold
+- ✅ Magic Keys app: HID pipeline, gesture engine, action engine, config UI, virtual K1
 - ⬜ Hardware-in-loop smoke test (Python `hidapi`)
 - ⬜ CAD update 4 → 3 keys; real measurements
 
