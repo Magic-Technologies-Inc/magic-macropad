@@ -18,6 +18,7 @@ struct AppChipsView: View {
             }
             .padding(.vertical, 1)
             .frame(height: 42)
+            .animation(.spring(response: 0.32, dampingFraction: 0.82), value: selectedID)
         }
         .frame(height: 42)
     }
@@ -34,18 +35,20 @@ struct AppChipsView: View {
                     Text(profile.name)
                         .font(MagicFont.text(14, weight: .medium))
                         .foregroundStyle(MagicColor.textPrimary)
+                        .fixedSize()
+                        .transition(.opacity.combined(with: .move(edge: .leading)))
                 }
             }
             .frame(height: 40)
             .padding(.horizontal, active ? 14 : 0)
             .frame(minWidth: active ? nil : 40)
             .background {
-                if active {
+                ZStack {
+                    Circle().fill(MagicColor.surfacePage.opacity(0.5)).opacity(active ? 0 : 1)
                     Capsule().fill(MagicColor.surfaceCard)
                         .overlay(Capsule().strokeBorder(MagicColor.borderSubtle, lineWidth: 1))
                         .shadow(color: MagicColor.prussian.opacity(0.10), radius: 2, y: 1)
-                } else {
-                    Circle().fill(MagicColor.surfacePage.opacity(0.5))
+                        .opacity(active ? 1 : 0)
                 }
             }
             .foregroundStyle(active ? MagicColor.textPrimary : MagicColor.textSecondary)

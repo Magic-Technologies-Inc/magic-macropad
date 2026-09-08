@@ -107,6 +107,9 @@ struct MenuBarPanel: View {
                 .font(MagicFont.text(12))
                 .foregroundStyle(MagicColor.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .id(model.editingProfileID)
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.2), value: model.editingProfileID)
             AppChipsView(profiles: config.profiles,
                          selectedID: model.editingProfileID,
                          onSelect: { model.selectProfile(id: $0); picking = nil })
@@ -158,7 +161,10 @@ struct MenuBarPanel: View {
                 .padding(.leading, 6)
                 .padding(.top, 4)
             gesturesColumn
+                .id(model.editingProfileID)
+                .transition(.opacity)
         }
+        .animation(.easeInOut(duration: 0.2), value: model.editingProfileID)
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
