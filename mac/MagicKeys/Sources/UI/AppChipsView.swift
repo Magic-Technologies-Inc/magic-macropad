@@ -18,7 +18,7 @@ struct AppChipsView: View {
             }
             .padding(.vertical, 1)
             .frame(height: 42)
-            .animation(.spring(response: 0.32, dampingFraction: 0.82), value: selectedID)
+            .animation(.easeInOut(duration: 0.16), value: selectedID)
         }
         .frame(height: 42)
     }
@@ -36,7 +36,7 @@ struct AppChipsView: View {
                         .font(MagicFont.text(14, weight: .medium))
                         .foregroundStyle(MagicColor.textPrimary)
                         .fixedSize()
-                        .transition(.opacity.combined(with: .move(edge: .leading)))
+                        .transition(.opacity)
                 }
             }
             .frame(height: 40)
