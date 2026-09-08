@@ -7,8 +7,7 @@ struct MagicKeysApp: App {
     @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
-        MenuBarExtra("Magic Keys",
-                     systemImage: model.isConnected ? "circle.grid.3x1.fill" : "circle.grid.3x1") {
+        MenuBarExtra {
             Text(model.isConnected
                  ? "K1 connected" + (model.deviceInfo.map { " — fw \($0.firmwareMajor).\($0.firmwareMinor)" } ?? "")
                  : "K1 not connected")
@@ -19,6 +18,9 @@ struct MagicKeysApp: App {
             }
             Divider()
             Button("Quit Magic Keys") { NSApp.terminate(nil) }
+        } label: {
+            Image(systemName: model.isConnected ? "circle.grid.3x1.fill" : "circle.grid.3x1")
+                .task { model.start() }
         }
 
         Window("Magic Keys", id: "config") {
