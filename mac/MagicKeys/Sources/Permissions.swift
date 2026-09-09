@@ -15,11 +15,34 @@ enum Permissions {
 
     /// One-click flow: clear the old grant, then prompt for Accessibility and
     /// Notifications and open the Accessibility settings pane to toggle it on.
+    ///
+    /// System Settings is quit first so the Privacy list reopens fresh — the
+    /// pane caches its rows and will otherwise show a stale "on" toggle for the
+    /// entry we just cleared, which is misleading (a dev rebuild's signature no
+    /// longer matches, so the running process is actually untrusted until the
+    /// user re-enables it).
     static func requestAll() {
         resetAccessibilityGrant()
         promptAccessibility()
-        openAccessibilitySettings()
         requestNotifications()
+        quitSystemSettings()
+        // Let System Settings fully terminate before reopening, so the pane
+        // loads a fresh list rather than the cached one it was just showing.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            openAccessibilitySettings()
+        }
+    }
+
+    /// Quits System Settings (and its legacy name) so it can't show a cached
+    /// snapshot of the Accessibility list when we reopen it.
+    private static func quitSystemSettings() {
+        for name in ["System Settings", "System Preferences"] {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
+            process.arguments = [name]
+            try? process.run()
+            process.waitUntilExit()
+        }
     }
 
     /// `tccutil reset` removes this bundle id from the Accessibility list, so the

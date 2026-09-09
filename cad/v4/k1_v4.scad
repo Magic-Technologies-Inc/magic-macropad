@@ -111,6 +111,8 @@ usb_notch_h     = slot_z + slot_h + 1 - tray_ht;  // clears the slot top;
 chain_ch_h    = 4.5;
 chain_ch_wall = 4;    // deck wall thickness on both sides of the channel
                       // (the USB notch zone stays open to the inner edge)
+deck_rear_wall = 1.5; // deck material kept at its rear end; the hollow now
+                      // reaches back this close so the adapter body clears
 
 /* ---------- USB adapter support shelf ----------
    Raised platform on the tray floor the 90-degree adapter's body sits on,
@@ -239,8 +241,9 @@ module lid() {
                   seat_wid - 1, comp_pocket + 1]);
         // chain channel: centered trench with chain_ch_wall on both sides;
         // the USB notch zone stays open to the inner edge for the adapter
-        translate([plug_from_rear - usb_notch_w / 2, wall_upper + 0.05, -1])
-            cube([usb_notch_w,
+        translate([wall_upper + fit_clr + deck_rear_wall, wall_upper + 0.05, -1])
+            cube([plug_from_rear + usb_notch_w / 2
+                      - (wall_upper + fit_clr + deck_rear_wall),
                   body_wid - wall_upper - fit_clr - chain_ch_wall
                       - (wall_upper + 0.05), chain_ch_h + 1]);
         translate([plug_from_rear + usb_notch_w / 2,
