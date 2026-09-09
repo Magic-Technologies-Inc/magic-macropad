@@ -88,10 +88,9 @@ cap_ht      = 11.5;
 cap_overlap = 1;    // skirt drop below the housing top when seated
 
 /* ---------- USB-C slot (inner wall, near rear) ---------- */
-plug_from_rear = 10;   // slot center from rear end; whole cutout shifted
-                       // 1.5mm rearward after fit test (slot spans 4.5-15.5)
-                       // so the chain sits further from the deck's key end
-slot_w = 11;           // sized for the 90-degree adapter's plug base
+plug_from_rear = 10.25; // slot center from rear end; rear edge held at
+                        // x=4.5 through the fit-test tweaks (now 4.5-16)
+slot_w = 11.5;         // sized for the 90-degree adapter's plug base
 slot_h = 6;
 tab_clr = 0.15;        // clearance around the lid's wall-filler tab
 slot_z = (body_ht - slot_h) / 2; // slot centered on body height for now;
@@ -109,7 +108,7 @@ usb_notch_h     = slot_z + slot_h + 1 - tray_ht;  // clears the slot top;
    board pocket so the adapter + coupler bodies (top ~12.5mm) fit under
    the lid. Height stays just under the tab bottom (4.6 local). */
 chain_ch_h    = 4.5;
-chain_ch_wall = 4;    // deck wall thickness on both sides of the channel
+chain_ch_wall = 3.5;  // deck wall thickness on both sides of the channel
                       // (the USB notch zone stays open to the inner edge)
 deck_rear_wall = 1.5; // deck material kept at its rear end; the hollow now
                       // reaches back this close so the adapter body clears
