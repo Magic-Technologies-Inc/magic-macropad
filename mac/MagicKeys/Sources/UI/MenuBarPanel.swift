@@ -194,15 +194,6 @@ struct MenuBarPanel: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(MagicColor.textPrimary)
                 Spacer()
-                Button {
-                    model.copyEditingProfileToAll()
-                } label: {
-                    Label("Copy to all apps", systemImage: "square.on.square")
-                        .font(MagicFont.text(13, weight: .semibold))
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(MagicColor.cerulean)
-                .disabled(config.profiles.count < 2)
             }
             .padding(.top, 2)
         }

@@ -87,16 +87,6 @@ final class AppModel: ObservableObject {
         if editingProfileID == id { editingProfileID = configStore.config.defaultProfile.id }
     }
 
-    /// Copies the editing profile's key bindings into every other profile.
-    func copyEditingProfileToAll() {
-        let keys = editingProfile.keys
-        configStore.update { config in
-            for i in config.profiles.indices where config.profiles[i].id != editingProfileID {
-                config.profiles[i].keys = keys
-            }
-        }
-    }
-
     func clearEditingKey(_ keyIndex: Int) {
         configStore.update { config in
             guard let i = config.profileIndex(id: editingProfileID),
