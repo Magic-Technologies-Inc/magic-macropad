@@ -140,7 +140,7 @@ struct MenuBarPanel: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
-        .foregroundStyle(MagicColor.textSecondary)
+        .foregroundStyle(MagicColor.cerulean)
         .help("Add an app profile")
     }
 
@@ -189,16 +189,16 @@ struct MenuBarPanel: View {
                     picking = nil
                 } label: {
                     Label("Clear key", systemImage: "minus")
-                        .font(MagicFont.text(13, weight: .medium))
+                        .font(MagicFont.text(13, weight: .semibold))
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(MagicColor.textSecondary)
+                .foregroundStyle(MagicColor.textPrimary)
                 Spacer()
                 Button {
                     model.copyEditingProfileToAll()
                 } label: {
                     Label("Copy to all apps", systemImage: "square.on.square")
-                        .font(MagicFont.text(13, weight: .medium))
+                        .font(MagicFont.text(13, weight: .semibold))
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(MagicColor.cerulean)
@@ -259,16 +259,16 @@ struct MenuBarPanel: View {
                 Text("Launch at Login").font(MagicFont.text(12, weight: .medium))
             }
             .toggleStyle(.checkbox)
-            .foregroundStyle(MagicColor.textSecondary)
+            .foregroundStyle(MagicColor.textPrimary)
             .fixedSize()
             Button {
                 NSApp.terminate(nil)
             } label: {
                 Label("Quit", systemImage: "power")
-                    .font(MagicFont.text(13, weight: .medium))
+                    .font(MagicFont.text(13, weight: .semibold))
             }
             .buttonStyle(.plain)
-            .foregroundStyle(MagicColor.textSecondary)
+            .foregroundStyle(MagicColor.textPrimary)
         }
         .padding(.horizontal, 2)
     }
