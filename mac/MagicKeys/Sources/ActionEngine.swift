@@ -24,14 +24,27 @@ final class ActionEngine {
             NSWorkspace.shared.open(url)
 
         case .keystroke(let keyCode, let modifiers):
+            guard ensureAccessibility() else { return }
             postKeystroke(keyCode: keyCode, modifiers: modifiers)
 
         case .media(let command):
+            // Synthesized media-key events are only injected if the app is
+            // trusted for Accessibility (same as keystrokes).
+            guard ensureAccessibility() else { return }
             mediaKey(for: command).post()
 
         case .shellScript(let script):
             runShell(script)
         }
+    }
+
+    /// Ensures Magic Keys is trusted for Accessibility (required to synthesize
+    /// key and media events), prompting on first use. Returns the trust state.
+    private func ensureAccessibility() -> Bool {
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+        if AXIsProcessTrustedWithOptions(options) { return true }
+        notifyFailure("Allow Magic Keys under System Settings → Privacy & Security → Accessibility, then try again.")
+        return false
     }
 
     private func mediaKey(for command: MediaCommand) -> MediaKey {
@@ -46,12 +59,6 @@ final class ActionEngine {
     }
 
     private func postKeystroke(keyCode: UInt16, modifiers: [KeyModifier]) {
-        // Prompts for Accessibility permission on first use.
-        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-        guard AXIsProcessTrustedWithOptions(options) else {
-            notifyFailure("Grant Accessibility permission to send keystrokes, then try again.")
-            return
-        }
         var flags: CGEventFlags = []
         for modifier in modifiers {
             switch modifier {
