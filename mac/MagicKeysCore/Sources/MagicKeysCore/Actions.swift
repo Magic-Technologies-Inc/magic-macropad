@@ -3,6 +3,7 @@ import Foundation
 public enum Gesture: Equatable, Sendable {
     case tap(key: Int)
     case doubleTap(key: Int)
+    case tripleTap(key: Int)
     case hold(key: Int)
 }
 
@@ -28,11 +29,14 @@ public enum ActionConfig: Codable, Equatable, Sendable {
 public struct KeyBinding: Codable, Equatable, Sendable {
     public var tap: ActionConfig?
     public var doubleTap: ActionConfig?
+    public var tripleTap: ActionConfig?
     public var hold: ActionConfig?
 
-    public init(tap: ActionConfig? = nil, doubleTap: ActionConfig? = nil, hold: ActionConfig? = nil) {
+    public init(tap: ActionConfig? = nil, doubleTap: ActionConfig? = nil,
+                tripleTap: ActionConfig? = nil, hold: ActionConfig? = nil) {
         self.tap = tap
         self.doubleTap = doubleTap
+        self.tripleTap = tripleTap
         self.hold = hold
     }
 }
@@ -76,6 +80,7 @@ public struct AppProfile: Codable, Equatable, Sendable, Identifiable {
         switch gesture {
         case .tap(let key): return keys.indices.contains(key) ? keys[key].tap : nil
         case .doubleTap(let key): return keys.indices.contains(key) ? keys[key].doubleTap : nil
+        case .tripleTap(let key): return keys.indices.contains(key) ? keys[key].tripleTap : nil
         case .hold(let key): return keys.indices.contains(key) ? keys[key].hold : nil
         }
     }

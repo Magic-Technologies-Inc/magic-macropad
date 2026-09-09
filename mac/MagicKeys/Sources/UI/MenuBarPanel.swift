@@ -12,11 +12,12 @@ struct MenuBarPanel: View {
     @State private var picking: Slot?
 
     enum Slot: Equatable {
-        case tap, doubleTap, hold
+        case tap, doubleTap, tripleTap, hold
         var label: String {
             switch self {
             case .tap: return "Tap"
             case .doubleTap: return "Double tap"
+            case .tripleTap: return "Triple tap"
             case .hold: return "Hold"
             }
         }
@@ -62,50 +63,23 @@ struct MenuBarPanel: View {
     // MARK: Header
 
     private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Magic Keys")
-                    .font(MagicFont.display(30))
-                    .foregroundStyle(MagicColor.textPrimary)
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(model.isConnected ? MagicColor.stateSuccess : MagicColor.slate300)
-                        .frame(width: 8, height: 8)
-                    Text(statusLine)
-                        .font(MagicFont.text(12, weight: .medium))
-                        .kerning(1.0)
-                        .textCase(.uppercase)
-                        .foregroundStyle(MagicColor.textSecondary)
-                }
-            }
+        HStack(alignment: .center) {
+            Text("Magic Keys")
+                .font(MagicFont.display(30))
+                .foregroundStyle(MagicColor.textPrimary)
             Spacer()
         }
-    }
-
-    private var statusLine: String {
-        guard model.isConnected else { return "K1 · not connected" }
-        if let info = model.deviceInfo {
-            return "K1 · fw \(info.firmwareMajor).\(info.firmwareMinor)"
-        }
-        return "K1 · USB-C"
     }
 
     // MARK: Apps section
 
     private var appsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 8) {
-                Text("Give an app its own key setup — otherwise keys use your defaults.")
-                    .font(MagicFont.text(12))
-                    .foregroundStyle(MagicColor.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 8)
-                addAppMenu
-            }
+        HStack(alignment: .center, spacing: 8) {
             AppChipsView(profiles: config.profiles,
                          selectedID: model.editingProfileID,
                          onSelect: { model.selectProfile(id: $0); picking = nil },
                          edgeInset: 16)
+            addAppMenu
         }
     }
 
@@ -161,9 +135,10 @@ struct MenuBarPanel: View {
     }
 
     private var gesturesColumn: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 7) {
             gestureRow(.tap)
             gestureRow(.doubleTap)
+            gestureRow(.tripleTap)
             gestureRow(.hold)
         }
         .padding(.horizontal, 10)
@@ -204,6 +179,7 @@ struct MenuBarPanel: View {
         switch slot {
         case .tap: return .tap(key: selectedKey)
         case .doubleTap: return .doubleTap(key: selectedKey)
+        case .tripleTap: return .tripleTap(key: selectedKey)
         case .hold: return .hold(key: selectedKey)
         }
     }
@@ -212,31 +188,17 @@ struct MenuBarPanel: View {
 
     private var footer: some View {
         HStack(spacing: 14) {
-            Text(model.isConnected
-                 ? "Firmware \(model.deviceInfo.map { "\($0.firmwareMajor).\($0.firmwareMinor)" } ?? "—") · Connected"
-                 : "Not connected · plug in your K1")
-                .font(MagicFont.text(12))
-                .foregroundStyle(MagicColor.textSecondary)
-                .lineLimit(1)
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(model.isConnected ? MagicColor.stateSuccess : MagicColor.slate300)
+                    .frame(width: 8, height: 8)
+                Text(model.isConnected ? "Connected" : "Not connected")
+                    .font(MagicFont.text(12, weight: .medium))
+                    .foregroundStyle(MagicColor.textSecondary)
+            }
             Spacer(minLength: 8)
             #if DEBUG
-            Menu {
-                ForEach(0..<3, id: \.self) { key in
-                    Button("Key \(key + 1): tap") { model.simulatePress(key: key) }
-                    Button("Key \(key + 1): double tap") {
-                        model.simulatePress(key: key)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { model.simulatePress(key: key) }
-                    }
-                    Button("Key \(key + 1): hold") { model.simulatePress(key: key, duration: 0.6) }
-                }
-            } label: {
-                Image(systemName: "wand.and.stars").font(.system(size: 12))
-            }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
-            .foregroundStyle(MagicColor.textTertiary)
-            .help("Virtual K1 (debug)")
+            virtualK1Menu
             #endif
             Toggle(isOn: launchAtLogin) {
                 Text("Launch at Login").font(MagicFont.text(12, weight: .medium))
@@ -256,6 +218,35 @@ struct MenuBarPanel: View {
         .padding(.horizontal, 2)
     }
 
+    #if DEBUG
+    private var virtualK1Menu: some View {
+        Menu {
+            ForEach(0..<3, id: \.self) { key in
+                Menu("Key \(key + 1)") {
+                    Button("Tap") { model.simulatePress(key: key) }
+                    Button("Double tap") {
+                        model.simulatePress(key: key)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { model.simulatePress(key: key) }
+                    }
+                    Button("Triple tap") {
+                        model.simulatePress(key: key)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { model.simulatePress(key: key) }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { model.simulatePress(key: key) }
+                    }
+                    Button("Hold") { model.simulatePress(key: key, duration: 0.6) }
+                }
+            }
+        } label: {
+            Label("Test keys", systemImage: "wand.and.stars")
+                .font(MagicFont.text(12, weight: .semibold))
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .foregroundStyle(MagicColor.cerulean)
+        .help("Simulate key presses without hardware")
+    }
+    #endif
+
     private var launchAtLogin: Binding<Bool> {
         Binding(
             get: { SMAppService.mainApp.status == .enabled },
@@ -270,7 +261,7 @@ struct MenuBarPanel: View {
     // MARK: Binding helpers
 
     private var boundCounts: [Int] {
-        profile.keys.map { [$0.tap, $0.doubleTap, $0.hold].compactMap { $0 }.count }
+        profile.keys.map { [$0.tap, $0.doubleTap, $0.tripleTap, $0.hold].compactMap { $0 }.count }
     }
 
     private func action(_ slot: Slot) -> ActionConfig? {
@@ -279,6 +270,7 @@ struct MenuBarPanel: View {
         switch slot {
         case .tap: return binding.tap
         case .doubleTap: return binding.doubleTap
+        case .tripleTap: return binding.tripleTap
         case .hold: return binding.hold
         }
     }
@@ -290,6 +282,7 @@ struct MenuBarPanel: View {
             switch slot {
             case .tap: config.profiles[pi].keys[selectedKey].tap = value
             case .doubleTap: config.profiles[pi].keys[selectedKey].doubleTap = value
+            case .tripleTap: config.profiles[pi].keys[selectedKey].tripleTap = value
             case .hold: config.profiles[pi].keys[selectedKey].hold = value
             }
         }

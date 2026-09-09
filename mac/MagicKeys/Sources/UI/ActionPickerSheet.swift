@@ -58,40 +58,46 @@ struct ActionPickerSheet: View {
     }
 
     private var header: some View {
-        HStack(spacing: 4) {
-            if case .params(let type, _) = stage {
-                Button {
-                    stage = .list
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left").font(.system(size: 12, weight: .semibold))
-                        Text("All actions").font(MagicFont.text(13, weight: .medium))
-                    }
-                    .frame(height: 30)
-                    .contentShape(Rectangle())
+        HStack(spacing: 8) {
+            Button(action: onClose) {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left").font(.system(size: 12, weight: .semibold))
+                    Text("Back").font(MagicFont.text(13, weight: .medium))
+                }
+                .frame(height: 30)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(MagicColor.cerulean)
+
+            Spacer()
+            Text(headerTitle)
+                .font(MagicFont.display(16))
+                .foregroundStyle(MagicColor.textPrimary)
+            Spacer()
+
+            if case .params = stage {
+                Button { stage = .list } label: {
+                    Text("Change action")
+                        .font(MagicFont.text(13, weight: .medium))
+                        .frame(height: 30)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(MagicColor.cerulean)
-                Spacer()
-                Text(type.title.replacingOccurrences(of: "…", with: ""))
-                    .font(MagicFont.display(16))
-                    .foregroundStyle(MagicColor.textPrimary)
             } else {
-                Text(title)
-                    .font(MagicFont.display(17))
-                    .foregroundStyle(MagicColor.textPrimary)
+                // Balance the title so it stays centered.
+                Text("Back").font(MagicFont.text(13, weight: .medium)).opacity(0)
             }
-            Spacer()
-            Button(action: onClose) {
-                Image(systemName: "xmark").font(.system(size: 13, weight: .semibold))
-                    .frame(width: 30, height: 30)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(MagicColor.textSecondary)
         }
-        .padding(.leading, 4)
         .padding(.bottom, 10)
+    }
+
+    private var headerTitle: String {
+        if case .params(let type, _) = stage {
+            return type.title.replacingOccurrences(of: "…", with: "")
+        }
+        return title
     }
 
     // MARK: List
@@ -144,8 +150,7 @@ struct ActionPickerSheet: View {
     // MARK: Param form
 
     private func paramForm(_ type: ActionType, _ draft: ActionConfig) -> some View {
-        ParamForm(type: type, initial: draft, removable: current != nil,
-                  onSet: { onSet($0) }, onRemove: { onSet(nil) })
+        ParamForm(type: type, initial: draft, onSet: { onSet($0) })
     }
 }
 
@@ -163,9 +168,7 @@ private struct HoverHighlight: View {
 private struct ParamForm: View {
     let type: ActionType
     let initial: ActionConfig
-    var removable: Bool = false
     let onSet: (ActionConfig) -> Void
-    var onRemove: () -> Void = {}
 
     @State private var bundleID = ""
     @State private var urlString = ""
@@ -190,13 +193,6 @@ private struct ParamForm: View {
             if type == .shellScript {
                 Button { loadShellFile() } label: {
                     Label("Load .sh file…", systemImage: "doc.text")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-            }
-            if removable {
-                Button(role: .destructive) { onRemove() } label: {
-                    Label("Remove", systemImage: "trash")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)

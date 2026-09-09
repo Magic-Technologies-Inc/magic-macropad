@@ -37,7 +37,7 @@ struct GestureRow: View {
                     .foregroundStyle(MagicColor.textSecondary)
             }
             .padding(.horizontal, 12)
-            .frame(height: 58)
+            .frame(height: 47)
             .contentShape(Rectangle())
             .background(background)
         }

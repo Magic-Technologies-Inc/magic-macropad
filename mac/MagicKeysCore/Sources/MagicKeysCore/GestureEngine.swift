@@ -1,14 +1,15 @@
 import Foundation
 
-/// Turns raw key down/up events into tap / doubleTap / hold gestures.
+/// Turns raw key down/up events into tap / doubleTap / tripleTap / hold gestures.
 /// Pure logic: no timers. Callers watch `nextDeadline` and call `expire(at:)`
 /// when it passes.
 public final class GestureEngine {
+    private static let maxTaps = 3
+
     private enum KeyState: Equatable {
         case idle
-        case firstDown(since: TimeInterval)
-        case awaitingSecondTap(deadline: TimeInterval)
-        case secondDown(since: TimeInterval)
+        case down(since: TimeInterval, count: Int)     // key pressed; the count-th press
+        case awaiting(deadline: TimeInterval, count: Int)  // released after `count` taps
         case holdFired
     }
 
@@ -22,12 +23,20 @@ public final class GestureEngine {
         self.states = Array(repeating: .idle, count: keyCount)
     }
 
+    private static func tapGesture(count: Int, key: Int) -> Gesture {
+        switch count {
+        case 1: return .tap(key: key)
+        case 2: return .doubleTap(key: key)
+        default: return .tripleTap(key: key)
+        }
+    }
+
     /// Feeds one raw key down/up event into the state machine for `event.key`.
     ///
     /// Calling contract: for a given key, `time` must be non-decreasing across
     /// successive calls (events must be delivered in chronological order).
     /// The engine is defensive about events that arrive later than they
-    /// "should" have — e.g. a second press that shows up after its double-tap
+    /// "should" have — e.g. a next press that shows up after its multi-tap
     /// window already lapsed is resolved as a fresh first press rather than
     /// trusted blindly — but callers should still call `expire(at:)` promptly
     /// once `nextDeadline` passes so pending gestures resolve in a timely way.
@@ -36,51 +45,51 @@ public final class GestureEngine {
         let key = event.key
         switch (states[key], event.isDown) {
         case (.idle, true):
-            states[key] = .firstDown(since: time)
+            states[key] = .down(since: time, count: 1)
             return []
-        case (.firstDown(let since), false):
+
+        case (.down(let since, let count), false):
             if time - since >= timing.holdThreshold - Self.epsilon {
                 states[key] = .idle
                 return [.hold(key: key)]
             }
-            states[key] = .awaitingSecondTap(deadline: time + timing.doubleTapWindow)
+            if count >= Self.maxTaps {
+                // Max taps reached — fire immediately, no need to wait.
+                states[key] = .idle
+                return [Self.tapGesture(count: count, key: key)]
+            }
+            states[key] = .awaiting(deadline: time + timing.doubleTapWindow, count: count)
             return []
-        case (.awaitingSecondTap(let deadline), true):
+
+        case (.awaiting(let deadline, let count), true):
             if time >= deadline {
-                // The double-tap window already lapsed — a timer that should
-                // have called `expire()` first was coalesced or delayed.
-                // Resolve the pending first press as a tap and treat this
-                // press as the start of a brand-new gesture.
-                states[key] = .firstDown(since: time)
-                return [.tap(key: key)]
+                // The multi-tap window already lapsed — a timer that should have
+                // called `expire()` first was coalesced or delayed. Resolve the
+                // pending gesture and treat this press as a brand-new first press.
+                states[key] = .down(since: time, count: 1)
+                return [Self.tapGesture(count: count, key: key)]
             }
-            states[key] = .secondDown(since: time)
+            states[key] = .down(since: time, count: count + 1)
             return []
-        case (.secondDown(let since), false):
-            states[key] = .idle
-            if time - since >= timing.holdThreshold - Self.epsilon {
-                return [.hold(key: key)]
-            }
-            return [.doubleTap(key: key)]
+
         case (.holdFired, false):
             states[key] = .idle
             return []
+
         default:
             return []  // duplicate down/up in same state — ignore
         }
     }
 
     /// The earliest time at which some key has a pending gesture that needs
-    /// resolving — a hold threshold or a double-tap window deadline. `nil`
-    /// when no key has anything pending. Callers should schedule a timer for
-    /// this deadline and call `expire(at:)` once it passes; `handle` alone
-    /// will not resolve a pending gesture whose deadline has elapsed.
+    /// resolving — a hold threshold or a multi-tap window deadline. `nil` when
+    /// no key has anything pending.
     public var nextDeadline: TimeInterval? {
         states.compactMap { state -> TimeInterval? in
             switch state {
-            case .firstDown(let since), .secondDown(let since):
+            case .down(let since, _):
                 return since + timing.holdThreshold
-            case .awaitingSecondTap(let deadline):
+            case .awaiting(let deadline, _):
                 return deadline
             case .idle, .holdFired:
                 return nil
@@ -89,28 +98,22 @@ public final class GestureEngine {
     }
 
     /// Resolves any pending gesture whose deadline is `<= time`. Safe to call
-    /// early or speculatively — before any deadline has passed this is a
-    /// no-op and returns an empty array. Callers should still call this once
-    /// `nextDeadline` passes; `handle` tolerates late events but does not
-    /// substitute for calling `expire` when nothing else prompts it (e.g. a
-    /// hold with no further key events after it).
+    /// early or speculatively — before any deadline has passed this is a no-op.
     public func expire(at time: TimeInterval) -> [Gesture] {
         var fired: [Gesture] = []
         for key in 0..<states.count {
             switch states[key] {
-            case .firstDown(let since), .secondDown(let since):
+            case .down(let since, _):
                 if time - since >= timing.holdThreshold - Self.epsilon {
                     states[key] = .holdFired
                     fired.append(.hold(key: key))
                 }
-            case .awaitingSecondTap(let deadline):
+            case .awaiting(let deadline, let count):
                 if time >= deadline {
                     states[key] = .idle
-                    fired.append(.tap(key: key))
+                    fired.append(Self.tapGesture(count: count, key: key))
                 }
-            case .idle:
-                break
-            case .holdFired:
+            case .idle, .holdFired:
                 break
             }
         }

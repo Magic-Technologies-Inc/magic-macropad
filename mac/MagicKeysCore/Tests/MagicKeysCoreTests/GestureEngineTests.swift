@@ -24,12 +24,36 @@ final class GestureEngineTests: XCTestCase {
         XCTAssertNil(engine.nextDeadline)
     }
 
-    func testDoubleTapFiresOnSecondRelease() {
+    func testDoubleTapFiresAfterWindow() {
         _ = down(0, at: 0.0)
         _ = up(0, at: 0.1)
         _ = down(0, at: 0.25)
-        XCTAssertEqual(up(0, at: 0.35), [.doubleTap(key: 0)])
+        // Second release no longer fires immediately — it waits to see a third tap.
+        XCTAssertEqual(up(0, at: 0.35), [])
+        XCTAssertEqual(engine.nextDeadline ?? 0, 0.65, accuracy: 1e-9)  // 0.35 + 0.3 window
+        XCTAssertEqual(engine.expire(at: 0.66), [.doubleTap(key: 0)])
         XCTAssertNil(engine.nextDeadline)
+    }
+
+    func testTripleTapFiresOnThirdRelease() {
+        _ = down(0, at: 0.0)
+        _ = up(0, at: 0.1)     // awaiting (count 1)
+        _ = down(0, at: 0.2)
+        _ = up(0, at: 0.3)     // awaiting (count 2)
+        _ = down(0, at: 0.4)
+        // Third release fires immediately (max taps reached).
+        XCTAssertEqual(up(0, at: 0.5), [.tripleTap(key: 0)])
+        XCTAssertNil(engine.nextDeadline)
+    }
+
+    func testThirdPressHeldBecomesHold() {
+        _ = down(0, at: 0.0)
+        _ = up(0, at: 0.1)
+        _ = down(0, at: 0.2)
+        _ = up(0, at: 0.3)
+        _ = down(0, at: 0.4)
+        XCTAssertEqual(engine.expire(at: 0.8), [.hold(key: 0)])  // 0.4 + 0.4 held
+        XCTAssertEqual(up(0, at: 0.9), [])
     }
 
     func testHoldFiresAtThresholdAndReleaseIsSilent() {
