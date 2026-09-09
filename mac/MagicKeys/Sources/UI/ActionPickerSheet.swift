@@ -16,7 +16,27 @@ struct ActionPickerSheet: View {
         case list
         case params(ActionType, ActionConfig)
     }
-    @State private var stage: Stage = .list
+    @State private var stage: Stage
+
+    init(title: String, current: ActionConfig?,
+         onSet: @escaping (ActionConfig?) -> Void, onClose: @escaping () -> Void) {
+        self.title = title
+        self.current = current
+        self.onSet = onSet
+        self.onClose = onClose
+        // If the gesture already has an action, open straight into its editor.
+        _stage = State(initialValue: Self.initialStage(for: current))
+    }
+
+    private static func initialStage(for current: ActionConfig?) -> Stage {
+        switch current {
+        case .openApp: return .params(.openApp, current!)
+        case .openURL: return .params(.openURL, current!)
+        case .keystroke: return .params(.keystroke, current!)
+        case .shellScript: return .params(.shellScript, current!)
+        case .media, .none: return .list  // media has nothing to edit → show the list
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -44,6 +64,8 @@ struct ActionPickerSheet: View {
                     stage = .list
                 } label: {
                     Image(systemName: "chevron.left").font(.system(size: 14, weight: .semibold))
+                        .frame(width: 30, height: 30)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(MagicColor.textSecondary)
@@ -58,12 +80,14 @@ struct ActionPickerSheet: View {
             Spacer()
             Button(action: onClose) {
                 Image(systemName: "xmark").font(.system(size: 13, weight: .semibold))
+                    .frame(width: 30, height: 30)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .foregroundStyle(MagicColor.textSecondary)
         }
-        .padding(.horizontal, 4)
-        .padding(.bottom, 12)
+        .padding(.leading, 4)
+        .padding(.bottom, 10)
     }
 
     // MARK: List
@@ -186,10 +210,7 @@ private struct ParamForm: View {
         case .keystroke:
             KeyRecorderField(keyCode: $keyCode, modifiers: $modifiers)
         case .shellScript:
-            TextEditor(text: $script)
-                .font(.system(.body, design: .monospaced))
-                .scrollContentBackground(.hidden)
-                .padding(6)
+            ScriptEditor(text: $script)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -197,11 +218,12 @@ private struct ParamForm: View {
                         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(MagicColor.borderDefault, lineWidth: 1)))
                 .overlay(alignment: .topLeading) {
                     if script.isEmpty {
+                        // ScriptEditor's text starts at inset (10, 10) — match it exactly.
                         Text("Paste your script here, or load a .sh file…")
-                            .font(.system(.body, design: .monospaced))
+                            .font(.system(size: 13, design: .monospaced))
                             .foregroundStyle(MagicColor.textTertiary)
-                            .padding(.horizontal, 11)
-                            .padding(.vertical, 14)
+                            .padding(.leading, 10)
+                            .padding(.top, 10)
                             .allowsHitTesting(false)
                     }
                 }
@@ -305,6 +327,50 @@ private struct ParamForm: View {
         if panel.runModal() == .OK, let url = panel.url,
            let content = try? String(contentsOf: url, encoding: .utf8) {
             script = content
+        }
+    }
+}
+
+/// A monospaced, multi-line script editor with known text insets (10, 10) so a
+/// placeholder can align exactly, and with smart substitutions off so scripts
+/// aren't mangled by curly quotes/dashes.
+private struct ScriptEditor: NSViewRepresentable {
+    @Binding var text: String
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scroll = NSTextView.scrollableTextView()
+        scroll.drawsBackground = false
+        scroll.hasVerticalScroller = true
+        guard let textView = scroll.documentView as? NSTextView else { return scroll }
+        textView.delegate = context.coordinator
+        textView.isRichText = false
+        textView.font = .monospacedSystemFont(ofSize: 13, weight: .regular)
+        textView.textColor = .labelColor
+        textView.drawsBackground = false
+        textView.textContainerInset = NSSize(width: 10, height: 10)
+        textView.textContainer?.lineFragmentPadding = 0
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        textView.isAutomaticSpellingCorrectionEnabled = false
+        textView.allowsUndo = true
+        textView.string = text
+        return scroll
+    }
+
+    func updateNSView(_ scroll: NSScrollView, context: Context) {
+        guard let textView = scroll.documentView as? NSTextView, textView.string != text else { return }
+        textView.string = text
+    }
+
+    final class Coordinator: NSObject, NSTextViewDelegate {
+        private let parent: ScriptEditor
+        init(_ parent: ScriptEditor) { self.parent = parent }
+        func textDidChange(_ notification: Notification) {
+            guard let textView = notification.object as? NSTextView else { return }
+            parent.text = textView.string
         }
     }
 }
