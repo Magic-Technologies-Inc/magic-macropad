@@ -42,17 +42,21 @@ actions.
   [docs/superpowers/specs/2026-09-07-k1-firmware-and-mac-app-design.md](docs/superpowers/specs/2026-09-07-k1-firmware-and-mac-app-design.md)
 - ✅ Implementation plans (firmware + Mac app, in docs/superpowers/plans/)
 - ✅ Firmware: vendor-HID device with debounced key events + GET_INFO, ported
-  to RP2040-Zero / Pico SDK (build-verified UF2; flash + enumeration pending
-  hardware bring-up — spec: docs/superpowers/specs/2026-09-08-rp2040-port-design.md)
+  to RP2040-Zero / Pico SDK, plus per-key WS2812 press colors
+  (spec: docs/superpowers/specs/2026-09-08-rp2040-port-design.md)
 - ✅ Magic Keys app: HID pipeline, gesture engine, action engine, config UI, virtual K1
-- 🔶 Hardware-in-loop smoke test written (run pending hardware)
+- ✅ Hardware bring-up (2026-09-08): flashed to a real RP2040-Zero, enumerates
+  as Magic K1 (0x1209:0x0001), smoke test PASS (GET_INFO + all key events,
+  gapless seq). Flash tip: a CircuitPython board can be kicked into BOOTSEL
+  from the Mac via a 1200-baud touch on its /dev/cu.usbmodem* port
+- ⬜ End-to-end: keys → Magic Keys app gestures → actions
 - ⬜ CAD update 4 → 3 keys; real measurements
 - ⬜ CAD: board pocket rework for the RP2040-Zero footprint (~18×23.5 mm,
   different pad layout than the XIAO the v2 CAD models)
 
 ## Explicitly out of scope for v1
 
-LEDs, on-device config, OTA/DFU, smart-home actions (hook exists via the
+On-device config, OTA/DFU, smart-home actions (hook exists via the
 `MagicAction` protocol), non-Mac hosts.
 
 ## Related Magic context
