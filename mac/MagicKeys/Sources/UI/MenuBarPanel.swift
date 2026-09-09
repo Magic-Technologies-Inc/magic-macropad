@@ -68,7 +68,35 @@ struct MenuBarPanel: View {
                 .font(MagicFont.display(30))
                 .foregroundStyle(MagicColor.textPrimary)
             Spacer()
+            permissionsButton
         }
+    }
+
+    @State private var accessibilityTrusted = Permissions.isAccessibilityTrusted
+
+    private var permissionsButton: some View {
+        Button {
+            Permissions.requestAll()
+            // Re-check shortly after (the user grants in System Settings).
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                accessibilityTrusted = Permissions.isAccessibilityTrusted
+            }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: accessibilityTrusted ? "checkmark.shield.fill" : "lock.shield")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("Permissions")
+                    .font(MagicFont.text(12, weight: .semibold))
+            }
+            .padding(.horizontal, 10)
+            .frame(height: 28)
+            .background(Capsule().fill(MagicColor.surfaceCard))
+            .overlay(Capsule().strokeBorder(MagicColor.borderSubtle, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(accessibilityTrusted ? MagicColor.stateSuccess : MagicColor.accentBlue)
+        .help("Request Accessibility & Notification permissions (clears any stale grant from a previous build)")
+        .onAppear { accessibilityTrusted = Permissions.isAccessibilityTrusted }
     }
 
     // MARK: Apps section
