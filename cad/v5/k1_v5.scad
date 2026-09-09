@@ -167,6 +167,10 @@ module tray() {
                        tray_ht + lid_th + well_depth / 2])
                 rotate([0, 90, 0])
                     cylinder(h = snap_len + 1.5, r = snap_grv_r);
+        // rear clip groove in the rear upper wall's inner face
+        translate([wall_upper, body_wid / 2 - snap_len / 2 - 0.75,
+                   tray_ht + lid_th + well_depth / 2])
+            rotate([-90, 0, 0]) cylinder(h = snap_len + 1.5, r = snap_grv_r);
         // ledge relief rear of the pivot so the lid can rock down there
         translate([wall_upper, wall_upper, tray_ht - relief])
             cube([pivot_x - wall_upper, well_wid, relief + 0.01]);
@@ -233,6 +237,12 @@ module lid() {
                 translate([x - snap_len / 2, y, lid_th + well_depth / 2])
                     rotate([0, 90, 0])
                         cylinder(h = snap_len, r = snap_r);
+            // rear clip: same bump on the deck's rear end face — resists
+            // rear lift, pops down out of its groove when the rocker is
+            // pressed to open
+            translate([wall_upper + fit_clr, body_wid / 2 - snap_len / 2,
+                       lid_th + well_depth / 2])
+                rotate([-90, 0, 0]) cylinder(h = snap_len, r = snap_r);
         }
         // deck underside pocket over the board's USB connector/components;
         // stops short of the deck/plate seam so the roof lip stays intact
