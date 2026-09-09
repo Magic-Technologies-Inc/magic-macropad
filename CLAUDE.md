@@ -16,7 +16,7 @@ changing the protocol or architecture.
 
 ## Layout
 
-- `cad/` — OpenSCAD enclosure, one folder per revision: `v0/` (first one-piece sketch), `v1/` (flat 2-part design — lid on top, switch housings exposed; includes its slicer project), `v2/` (`k1_v2.scad`, current — recessed key well keeps the keys flush, drop-in lid with raised deck). Body/plug dims still placeholders until the MacBook is measured
+- `cad/` — OpenSCAD enclosure, one folder per revision: `v0/` (first one-piece sketch), `v1/` (flat 2-part design — lid on top, switch housings exposed; includes its slicer project), `v2/` (recessed key well, drop-in lid with raised deck), `v3/` (`k1_v3.scad`, current — adds drop-in USB notch with lid filler tab, 12x6 cutout). Body/plug dims still placeholders until the MacBook is measured
 - `firmware/` — Pico SDK + TinyUSB vendor-HID device (RP2040-Zero; see
   `docs/superpowers/specs/2026-09-08-rp2040-port-design.md`)
 - `mac/` — Magic Keys, SwiftUI menu-bar app (macOS 14+, `IOHIDManager`)
