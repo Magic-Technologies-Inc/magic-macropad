@@ -183,19 +183,6 @@ struct MenuBarPanel: View {
                 gestureRow(.doubleTap)
                 gestureRow(.hold)
             }
-            HStack(spacing: 8) {
-                Button {
-                    model.clearEditingKey(selectedKey)
-                    picking = nil
-                } label: {
-                    Label("Clear key", systemImage: "minus")
-                        .font(MagicFont.text(13, weight: .semibold))
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(MagicColor.textPrimary)
-                Spacer()
-            }
-            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

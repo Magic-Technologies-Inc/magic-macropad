@@ -87,13 +87,6 @@ final class AppModel: ObservableObject {
         if editingProfileID == id { editingProfileID = configStore.config.defaultProfile.id }
     }
 
-    func clearEditingKey(_ keyIndex: Int) {
-        configStore.update { config in
-            guard let i = config.profileIndex(id: editingProfileID),
-                  config.profiles[i].keys.indices.contains(keyIndex) else { return }
-            config.profiles[i].keys[keyIndex] = KeyBinding()
-        }
-    }
 
     func start() {
         pipeline = makePipeline()
