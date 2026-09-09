@@ -6,6 +6,9 @@ struct KeycapDeviceView: View {
     @Binding var selectedKey: Int
     var boundCounts: [Int]   // number of assigned gestures per key (for the title)
 
+    /// Holder height: 3 keycaps (62) + 2 gaps (9) + top/bottom padding (9) = 222.
+    static let holderHeight: CGFloat = 62 * 3 + 9 * 2 + 9 * 2
+
     var body: some View {
         holder
             .overlay(alignment: .topLeading) {

@@ -166,8 +166,8 @@ struct MenuBarPanel: View {
             gestureRow(.doubleTap)
             gestureRow(.hold)
         }
-        .padding(10)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(MagicColor.surfaceAccentSoft)
@@ -183,10 +183,14 @@ struct MenuBarPanel: View {
                 .offset(x: -8, y: connectorY - 9)
                 .animation(.easeOut(duration: 0.16), value: selectedKey)
         }
+        // Match the device holder's exact vertical extent (222pt tall, starting
+        // at the same 4pt top inset) so the two boxes line up.
+        .frame(height: KeycapDeviceView.holderHeight)
+        .padding(.top, 4)
     }
 
-    /// Vertical center of the selected keycap, relative to the gestures panel top.
-    private var connectorY: CGFloat { 44 + CGFloat(selectedKey) * 71 }
+    /// Vertical center of the selected keycap, relative to the panel box top.
+    private var connectorY: CGFloat { 40 + CGFloat(selectedKey) * 71 }
 
     private func gestureRow(_ slot: Slot) -> some View {
         GestureRow(label: slot.label,
