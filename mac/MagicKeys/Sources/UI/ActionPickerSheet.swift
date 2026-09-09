@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 import MagicKeysCore
 
 /// The action picker that drops in below the main card when a gesture row is
@@ -24,7 +25,6 @@ struct ActionPickerSheet: View {
             case .list: actionList
             case .params(let type, let draft):
                 paramForm(type, draft)
-                Spacer(minLength: 0)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -146,20 +146,34 @@ private struct ParamForm: View {
     @State private var modifiers: [KeyModifier] = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             fields
-            if type != .openApp {  // Open App commits on selection — no Set button.
-                HStack {
-                    Spacer()
-                    Button("Set") { onSet(build()) }
-                        .buttonStyle(.borderedProminent)
-                        .tint(MagicColor.cerulean)
-                }
-            }
+            buttonRow
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(.horizontal, 4)
         .padding(.top, 2)
         .onAppear(perform: seed)
+    }
+
+    @ViewBuilder
+    private var buttonRow: some View {
+        HStack(spacing: 8) {
+            if type == .shellScript {
+                Button { loadShellFile() } label: {
+                    Label("Load .sh file…", systemImage: "doc.text")
+                        .font(MagicFont.text(12, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(MagicColor.cerulean)
+            }
+            Spacer()
+            if type != .openApp {  // Open App commits on selection — no Set button.
+                Button("Set") { onSet(build()) }
+                    .buttonStyle(.borderedProminent)
+                    .tint(MagicColor.cerulean)
+            }
+        }
     }
 
     @ViewBuilder
@@ -172,9 +186,25 @@ private struct ParamForm: View {
         case .keystroke:
             KeyRecorderField(keyCode: $keyCode, modifiers: $modifiers)
         case .shellScript:
-            TextField("say hello", text: $script)
-                .textFieldStyle(.roundedBorder)
+            TextEditor(text: $script)
                 .font(.system(.body, design: .monospaced))
+                .scrollContentBackground(.hidden)
+                .padding(6)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(MagicColor.surfacePageAlt)
+                        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(MagicColor.borderDefault, lineWidth: 1)))
+                .overlay(alignment: .topLeading) {
+                    if script.isEmpty {
+                        Text("Paste your script here, or load a .sh file…")
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundStyle(MagicColor.textTertiary)
+                            .padding(.horizontal, 11)
+                            .padding(.vertical, 14)
+                            .allowsHitTesting(false)
+                    }
+                }
         }
     }
 
@@ -263,6 +293,18 @@ private struct ParamForm: View {
         if panel.runModal() == .OK, let url = panel.url,
            let bundle = Bundle(url: url), let id = bundle.bundleIdentifier {
             onSet(.openApp(bundleID: id))
+        }
+    }
+
+    private func loadShellFile() {
+        let panel = NSOpenPanel()
+        var types: [UTType] = [.plainText, .text]
+        if let sh = UTType(filenameExtension: "sh") { types.insert(sh, at: 0) }
+        panel.allowedContentTypes = types
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let url = panel.url,
+           let content = try? String(contentsOf: url, encoding: .utf8) {
+            script = content
         }
     }
 }
