@@ -13,6 +13,11 @@ static queue_t s_event_queue;
 static k1_debounce_t s_db[K1_KEY_COUNT];
 static uint64_t s_next_scan_us;
 
+bool k1_keys_pressed(int key)
+{
+    return s_db[key].stable;
+}
+
 queue_t *k1_keys_init(void)
 {
     for (int i = 0; i < K1_KEY_COUNT; i++) {

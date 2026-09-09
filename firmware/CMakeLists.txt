@@ -8,10 +8,12 @@ add_executable(k1_firmware
     main/k1_main.c
     main/debounce.c
     main/keys.c
+    main/led.c
     main/usb_hid.c
 )
+pico_generate_pio_header(k1_firmware ${CMAKE_CURRENT_LIST_DIR}/main/ws2812.pio)
 target_include_directories(k1_firmware PRIVATE main)
-target_link_libraries(k1_firmware pico_stdlib pico_util tinyusb_device)
+target_link_libraries(k1_firmware pico_stdlib pico_util hardware_pio tinyusb_device)
 
 # Debug logs on UART1 (GPIO 8/9, 115200) — keys occupy UART0's default
 # GPIO 0/1. USB stays dedicated to the HID interface.

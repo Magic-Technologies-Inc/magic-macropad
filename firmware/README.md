@@ -28,3 +28,6 @@ Hold BOOT while plugging the board in, then drag the UF2 onto the mounted
 Key GPIOs are defined in `main/keys.c` (`K1_KEY_GPIOS`) — GPIO 0/1/2,
 active-low (key to GND), internal pull-ups. Debug logs: UART1 on GPIO 8/9 at
 115200 (optional to wire; keys occupy UART0's default pins).
+
+The onboard WS2812 (GPIO 16) shows a dim per-key color while a key is held
+(red/green/blue for keys 0/1/2) — `main/led.c`.
