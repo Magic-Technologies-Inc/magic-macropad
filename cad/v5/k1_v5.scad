@@ -342,11 +342,22 @@ module assembly(explode = 0) {
     }
 }
 
-if (part == "tray")          tray();
-// deck exports upside down = its print orientation (pockets/tab face up)
-else if (part == "deck")     translate([0, body_wid, lid_th + well_depth])
-                                 rotate([180, 0, 0]) deck_part();
-else if (part == "plate")    plate_part();
-else if (part == "lid")      lid(); // full one-piece lid, reference only
-else if (part == "assembly") assembly(0);
-else if (part == "exploded") assembly(14);
+// mirrored=true flips the whole design for the MacBook's other side
+// (USB cutout on the opposite face). Tray and deck are chiral — print
+// the *_mirror STLs for that side; the key plate is symmetric either way.
+//   openscad -D 'part="tray"' -D 'mirrored=true' -o k1_tray_mirror.stl k1_v5.scad
+mirrored = false;
+
+module emit() {
+    if (part == "tray")          tray();
+    // deck exports upside down = its print orientation (pockets/tab face up)
+    else if (part == "deck")     translate([0, body_wid, lid_th + well_depth])
+                                     rotate([180, 0, 0]) deck_part();
+    else if (part == "plate")    plate_part();
+    else if (part == "lid")      lid(); // full one-piece lid, reference only
+    else if (part == "assembly") assembly(0);
+    else if (part == "exploded") assembly(14);
+}
+
+if (mirrored) translate([0, body_wid, 0]) mirror([0, 1, 0]) emit();
+else emit();
