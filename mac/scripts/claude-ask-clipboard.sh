@@ -6,7 +6,8 @@ CLAUDE="$HOME/.local/bin/claude"
 Q=$(pbpaste)
 [ -z "$Q" ] && exit 0
 
-A=$("$CLAUDE" -p "Answer briefly (a few sentences, plain text): $Q" 2>&1)
+A=$("$CLAUDE" -p --allowedTools "WebSearch,WebFetch" \
+    "Answer briefly (a few sentences, plain text): $Q" 2>&1)
 [ -z "$A" ] && A="(no answer — is the claude CLI logged in?)"
 
 osascript - "$A" <<'EOF'
