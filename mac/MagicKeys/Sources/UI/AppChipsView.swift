@@ -44,7 +44,7 @@ struct AppChipsView: View {
             .background(
                 Capsule()
                     .fill(active ? MagicColor.surfaceCard : MagicColor.surfacePageAlt.opacity(0.6))
-                    .overlay(Capsule().strokeBorder(active ? MagicColor.cerulean.opacity(0.55)
+                    .overlay(Capsule().strokeBorder(active ? MagicColor.accentBlue.opacity(0.7)
                                                     : MagicColor.borderSubtle,
                                                     lineWidth: active ? 1.5 : 1))
                     .shadow(color: active ? MagicColor.prussian.opacity(0.12) : .clear, radius: 3, y: 1)

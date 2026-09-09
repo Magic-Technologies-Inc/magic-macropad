@@ -109,7 +109,7 @@ struct MenuBarPanel: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
-        .foregroundStyle(MagicColor.cerulean)
+        .foregroundStyle(MagicColor.accentBlue)
         .help("Add an app profile")
     }
 
@@ -242,7 +242,7 @@ struct MenuBarPanel: View {
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
-        .foregroundStyle(MagicColor.cerulean)
+        .foregroundStyle(MagicColor.accentBlue)
         .help("Simulate key presses without hardware")
     }
     #endif

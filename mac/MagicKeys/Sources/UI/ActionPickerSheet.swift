@@ -68,7 +68,7 @@ struct ActionPickerSheet: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .foregroundStyle(MagicColor.cerulean)
+            .foregroundStyle(MagicColor.accentBlue)
 
             Spacer()
             Text(headerTitle)
@@ -84,7 +84,7 @@ struct ActionPickerSheet: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(MagicColor.cerulean)
+                .foregroundStyle(MagicColor.accentBlue)
             } else {
                 // Balance the title so it stays centered.
                 Text("Back").font(MagicFont.text(13, weight: .medium)).opacity(0)

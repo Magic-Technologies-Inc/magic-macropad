@@ -68,6 +68,10 @@ enum MagicColor {
     static let borderAccent = dawn
     static let borderHairline = Color(light: NSColor(hex: 0x052B42, alpha: 0.10), dark: NSColor(hex: 0xFFFFFF, alpha: 0.08))
 
+    // Interactive accent for text/icons — cerulean in light, Sky in dark so it
+    // stays readable on dark surfaces (matches the design system's text-link).
+    static let accentBlue = Color(light: NSColor(hex: 0x1C3792), dark: NSColor(hex: 0xA7C5F1))
+
     // State
     static let stateSuccess = Color(hex: 0x1E7A54)
 
