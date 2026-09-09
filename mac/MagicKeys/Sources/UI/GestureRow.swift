@@ -77,11 +77,12 @@ struct GestureRow: View {
     }
 
     private var background: some View {
-        let fill = isOpen ? MagicColor.surfaceAccentSoft
-            : (isHovered ? MagicColor.surfaceSunken : MagicColor.surfacePageAlt)
+        // Sits on the warm "selected key" panel, so rows are white and lift on
+        // hover; the open row gets a Dawn accent border.
+        let fill = (isHovered && !isOpen) ? MagicColor.surfaceSunken : MagicColor.surfaceCard
         let stroke = isOpen ? MagicColor.borderAccent : MagicColor.borderSubtle
-        return RoundedRectangle(cornerRadius: 14, style: .continuous)
+        return RoundedRectangle(cornerRadius: 12, style: .continuous)
             .fill(fill)
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(stroke, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(stroke, lineWidth: isOpen ? 1.5 : 1))
     }
 }

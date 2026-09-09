@@ -94,19 +94,14 @@ struct MenuBarPanel: View {
 
     private var appsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("Applications")
-                    .font(MagicFont.text(12, weight: .medium))
-                    .kerning(1.2)
-                    .textCase(.uppercase)
+            HStack(alignment: .top, spacing: 8) {
+                Text("Give an app its own key setup — otherwise keys use your defaults.")
+                    .font(MagicFont.text(12))
                     .foregroundStyle(MagicColor.textSecondary)
-                Spacer()
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 8)
                 addAppMenu
             }
-            Text("Give an app its own key setup — otherwise keys use your defaults.")
-                .font(MagicFont.text(12))
-                .foregroundStyle(MagicColor.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
             AppChipsView(profiles: config.profiles,
                          selectedID: model.editingProfileID,
                          onSelect: { model.selectProfile(id: $0); picking = nil },
@@ -166,26 +161,32 @@ struct MenuBarPanel: View {
     }
 
     private var gesturesColumn: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("Key \(selectedKey + 1) gestures")
-                    .font(MagicFont.text(12, weight: .medium))
-                    .kerning(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(MagicColor.textSecondary)
-                Spacer()
-                Text(profile.isDefault ? "All apps" : profile.name)
-                    .font(MagicFont.text(12))
-                    .foregroundStyle(MagicColor.textSecondary)
-            }
-            VStack(spacing: 8) {
-                gestureRow(.tap)
-                gestureRow(.doubleTap)
-                gestureRow(.hold)
-            }
+        VStack(spacing: 8) {
+            gestureRow(.tap)
+            gestureRow(.doubleTap)
+            gestureRow(.hold)
         }
+        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(MagicColor.surfaceAccentSoft)
+                .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(MagicColor.horizon.opacity(0.55), lineWidth: 1))
+        )
+        // A little tab pointing back at the selected keycap, so it's clear these
+        // actions belong to the one highlighted key.
+        .overlay(alignment: .topLeading) {
+            LeftPointer()
+                .fill(MagicColor.surfaceAccentSoft)
+                .overlay(LeftPointer().stroke(MagicColor.horizon.opacity(0.55), lineWidth: 1))
+                .frame(width: 9, height: 18)
+                .offset(x: -8, y: connectorY - 9)
+                .animation(.easeOut(duration: 0.16), value: selectedKey)
+        }
     }
+
+    /// Vertical center of the selected keycap, relative to the gestures panel top.
+    private var connectorY: CGFloat { 44 + CGFloat(selectedKey) * 71 }
 
     private func gestureRow(_ slot: Slot) -> some View {
         GestureRow(label: slot.label,
@@ -288,5 +289,18 @@ struct MenuBarPanel: View {
             case .hold: config.profiles[pi].keys[selectedKey].hold = value
             }
         }
+    }
+}
+
+/// A small left-pointing triangle used as the connector tab from the gestures
+/// panel back to the selected keycap.
+private struct LeftPointer: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.midY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }
