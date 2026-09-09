@@ -58,19 +58,23 @@ struct ActionPickerSheet: View {
     }
 
     private var header: some View {
-        HStack {
+        HStack(spacing: 4) {
             if case .params(let type, _) = stage {
                 Button {
                     stage = .list
                 } label: {
-                    Image(systemName: "chevron.left").font(.system(size: 14, weight: .semibold))
-                        .frame(width: 30, height: 30)
-                        .contentShape(Rectangle())
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left").font(.system(size: 12, weight: .semibold))
+                        Text("All actions").font(MagicFont.text(13, weight: .medium))
+                    }
+                    .frame(height: 30)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(MagicColor.textSecondary)
+                .foregroundStyle(MagicColor.cerulean)
+                Spacer()
                 Text(type.title.replacingOccurrences(of: "…", with: ""))
-                    .font(MagicFont.display(17))
+                    .font(MagicFont.display(16))
                     .foregroundStyle(MagicColor.textPrimary)
             } else {
                 Text(title)
@@ -139,11 +143,9 @@ struct ActionPickerSheet: View {
 
     // MARK: Param form
 
-    @ViewBuilder
     private func paramForm(_ type: ActionType, _ draft: ActionConfig) -> some View {
-        ParamForm(type: type, initial: draft) { configured in
-            onSet(configured)
-        }
+        ParamForm(type: type, initial: draft, removable: current != nil,
+                  onSet: { onSet($0) }, onRemove: { onSet(nil) })
     }
 }
 
@@ -161,7 +163,9 @@ private struct HoverHighlight: View {
 private struct ParamForm: View {
     let type: ActionType
     let initial: ActionConfig
+    var removable: Bool = false
     let onSet: (ActionConfig) -> Void
+    var onRemove: () -> Void = {}
 
     @State private var bundleID = ""
     @State private var urlString = ""
@@ -186,10 +190,16 @@ private struct ParamForm: View {
             if type == .shellScript {
                 Button { loadShellFile() } label: {
                     Label("Load .sh file…", systemImage: "doc.text")
-                        .font(MagicFont.text(12, weight: .medium))
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(MagicColor.cerulean)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            if removable {
+                Button(role: .destructive) { onRemove() } label: {
+                    Label("Remove", systemImage: "trash")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
             }
             Spacer()
             if type != .openApp {  // Open App commits on selection — no Set button.

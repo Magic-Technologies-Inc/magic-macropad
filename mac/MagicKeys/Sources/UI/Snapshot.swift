@@ -41,7 +41,7 @@ enum Snapshot {
         func renderPicker(to url: URL) {
             let view = ActionPickerSheet(
                 title: "Assign to tap",
-                current: .openURL(urlString: "https://usemagic.io"),
+                current: .shellScript(script: ""),
                 onSet: { _ in }, onClose: {})
                 .frame(width: 442, height: 290)
                 .padding(16)
