@@ -105,43 +105,13 @@ struct MenuBarPanel: View {
     // MARK: Apps section
 
     private var appsSection: some View {
-        HStack(alignment: .center, spacing: 8) {
-            AppChipsView(profiles: config.profiles,
-                         selectedID: model.editingProfileID,
-                         onSelect: { model.selectProfile(id: $0); picking = nil },
-                         edgeInset: 16)
-            addAppMenu
-        }
-    }
-
-    private var addAppMenu: some View {
-        let apps = model.addableApps()
-        return Menu {
-            if apps.isEmpty {
-                Text("No other apps running")
-            } else {
-                ForEach(apps) { app in
-                    Button {
-                        model.addProfile(bundleID: app.id, name: app.name)
-                    } label: {
-                        if let icon = ProfileIcon.appIcon(app.id) {
-                            Label { Text(app.name) } icon: { Image(nsImage: icon) }
-                        } else {
-                            Text(app.name)
-                        }
-                    }
-                }
-            }
-            Divider()
-            Button("Choose from Applications…") { model.addProfileByChoosingApp() }
-        } label: {
-            Image(systemName: "plus").font(.system(size: 14, weight: .semibold))
-        }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
-        .fixedSize()
-        .foregroundStyle(MagicColor.accentBlue)
-        .help("Add an app profile")
+        AppChipsView(profiles: config.profiles,
+                     selectedID: model.editingProfileID,
+                     onSelect: { model.selectProfile(id: $0); picking = nil },
+                     addableApps: model.addableApps(),
+                     onAddApp: { model.addProfile(bundleID: $0.id, name: $0.name) },
+                     onChooseApp: { model.addProfileByChoosingApp() },
+                     edgeInset: 16)
     }
 
     // MARK: Main card

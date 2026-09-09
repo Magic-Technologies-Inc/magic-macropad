@@ -8,6 +8,11 @@ struct AppChipsView: View {
     let profiles: [AppProfile]
     let selectedID: String
     let onSelect: (String) -> Void
+    /// Apps that can be added, plus the add callbacks — rendered as a trailing
+    /// "+" capsule that scrolls with the chips.
+    var addableApps: [AppModel.RunningApp] = []
+    var onAddApp: (AppModel.RunningApp) -> Void = { _ in }
+    var onChooseApp: () -> Void = {}
     /// The parent's horizontal content margin — the row breaks out past it so
     /// chips scroll all the way to the panel edge, while resting aligned.
     var edgeInset: CGFloat = 0
@@ -20,12 +25,52 @@ struct AppChipsView: View {
                 ForEach(profiles) { profile in
                     chip(profile)
                 }
+                addChip
             }
             .padding(.horizontal, edgeInset)
             .frame(height: 42)
         }
         .frame(height: 42)
         .padding(.horizontal, -edgeInset)
+    }
+
+    /// The trailing "+" capsule that opens the add-app menu, sized to match the
+    /// chips so it sits in the same row and scrolls to the edge with them.
+    private var addChip: some View {
+        Menu {
+            if addableApps.isEmpty {
+                Text("No other apps running")
+            } else {
+                ForEach(addableApps) { app in
+                    Button {
+                        onAddApp(app)
+                    } label: {
+                        if let icon = ProfileIcon.appIcon(app.id) {
+                            Label { Text(app.name) } icon: { Image(nsImage: icon) }
+                        } else {
+                            Text(app.name)
+                        }
+                    }
+                }
+            }
+            Divider()
+            Button("Choose from Applications…") { onChooseApp() }
+        } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 14, weight: .semibold))
+                .frame(width: 40, height: 40)
+                .background(
+                    Capsule()
+                        .fill(MagicColor.surfacePageAlt.opacity(0.6))
+                        .overlay(Capsule().strokeBorder(MagicColor.borderSubtle, lineWidth: 1))
+                )
+                .foregroundStyle(MagicColor.accentBlue)
+                .contentShape(Capsule())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Add an app profile")
     }
 
     private func chip(_ profile: AppProfile) -> some View {
