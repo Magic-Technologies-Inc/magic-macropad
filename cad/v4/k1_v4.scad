@@ -67,7 +67,8 @@ seat_x0     = 45.5;   // rear edge of the seat (board USB-C faces rear);
 seat_len    = 24;
 seat_wid    = 18.5;
 seat_depth  = relief; // shares the relieved-ledge height
-comp_pocket = 3;      // depth of the deck underside pocket over the board
+comp_pocket = 4.5;    // deck underside pocket over the board — matches the
+                      // chain channel depth so the hollow is one level
 
 /* ---------- Keys (MX) ---------- */
 key_count       = 3;
@@ -87,8 +88,9 @@ cap_ht      = 11.5;
 cap_overlap = 1;    // skirt drop below the housing top when seated
 
 /* ---------- USB-C slot (inner wall, near rear) ---------- */
-plug_from_rear = 12;   // slot center from rear end
-slot_w = 12;           // sized for the 90-degree adapter's plug base
+plug_from_rear = 11.5; // slot center from rear end (rear edge held at x=6;
+                       // the keys-side edge came in 1mm with the narrowing)
+slot_w = 11;           // sized for the 90-degree adapter's plug base
 slot_h = 6;
 tab_clr = 0.15;        // clearance around the lid's wall-filler tab
 slot_z = (body_ht - slot_h) / 2; // slot centered on body height for now;
@@ -105,8 +107,9 @@ usb_notch_h     = slot_z + slot_h + 1 - tray_ht;  // clears the slot top;
 /* Chain channel: hollows the deck underside from the USB notch to the
    board pocket so the adapter + coupler bodies (top ~12.5mm) fit under
    the lid. Height stays just under the tab bottom (4.6 local). */
-chain_ch_h = 4.5;
-chain_ch_w = 14;
+chain_ch_h    = 4.5;
+chain_ch_wall = 4;    // deck wall thickness on both sides of the channel
+                      // (the USB notch zone stays open to the inner edge)
 
 /* ---------- USB adapter support shelf ----------
    Raised platform on the tray floor the 90-degree adapter's body sits on,
@@ -114,8 +117,8 @@ chain_ch_w = 14;
    the coupler hangs between adapter and board. Measure usb_body_th! */
 usb_body_th  = 8;    // est. adapter body thickness
 usb_shelf_x0 = plug_from_rear - slot_w / 2 - 0.5;             // 5.5
-usb_shelf_len = 15;                                           // adapter zone
-usb_shelf_w  = 9;
+usb_shelf_len = seat_x0 - (plug_from_rear - slot_w / 2 - 0.5); // to the board seat
+usb_shelf_w  = body_wid - 2 * wall;  // full cavity width, wall to wall
 usb_shelf_top = slot_z + slot_h / 2 - usb_body_th / 2;        // 4.5
 
 /* ---------- Derived ---------- */
@@ -233,11 +236,17 @@ module lid() {
         translate([seat_x0, (body_wid - seat_wid) / 2 + 0.5, -1])
             cube([min(seat_len, deck_bot_end - 0.5 - seat_x0),
                   seat_wid - 1, comp_pocket + 1]);
-        // chain channel: hollow under the deck from the USB notch to the
-        // board pocket (starts inside the wall line to spare the tab)
+        // chain channel: centered trench with chain_ch_wall on both sides;
+        // the USB notch zone stays open to the inner edge for the adapter
         translate([plug_from_rear - usb_notch_w / 2, wall_upper + 0.05, -1])
-            cube([seat_x0 - (plug_from_rear - usb_notch_w / 2) + 1,
-                  chain_ch_w, chain_ch_h + 1]);
+            cube([usb_notch_w,
+                  body_wid - wall_upper - fit_clr - chain_ch_wall
+                      - (wall_upper + 0.05), chain_ch_h + 1]);
+        translate([plug_from_rear + usb_notch_w / 2,
+                   wall_upper + fit_clr + chain_ch_wall, -1])
+            cube([seat_x0 - (plug_from_rear + usb_notch_w / 2) + 1,
+                  body_wid - 2 * (wall_upper + fit_clr + chain_ch_wall),
+                  chain_ch_h + 1]);
         // MX plate cutouts — switches drop in from the top and clip under
         for (i = [0 : key_count - 1])
             translate([key_cx(i) - plate_hole / 2,
