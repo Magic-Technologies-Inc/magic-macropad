@@ -1,13 +1,13 @@
 #!/bin/sh
-# K1 action: select a screen region -> new Claude chat with it pasted.
+# K1 action: full-screen screenshot -> new Claude chat with it pasted.
 #
-# screencapture -i lets you drag a region (Esc cancels, space toggles
-# window mode); -c puts it on the clipboard. Then Cmd+N / Cmd+V in Claude.
+# screencapture -c puts the whole screen on the clipboard, no interaction.
+# Then Cmd+N / Cmd+V in Claude.
 #
 # Needs (granted to MagicKeys.app, which runs this): Screen Recording for
 # screencapture, Accessibility for the System Events keystrokes.
 
-screencapture -ic || exit 0
+screencapture -c || exit 0
 
 osascript <<'EOF'
 tell application "Claude" to activate
