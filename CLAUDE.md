@@ -16,7 +16,7 @@ changing the protocol or architecture.
 
 ## Layout
 
-- `cad/` — OpenSCAD enclosure, one folder per revision: `v0/` (first one-piece sketch), `v1/` (flat 2-part design — lid on top, switch housings exposed; includes its slicer project), `v2/` (recessed key well, drop-in lid with raised deck), `v3/` (drop-in USB notch with lid filler tab), `v4/` (lid split into deck + key plate, adapter shelf — first confirmed-fitting print), `v5/` (`k1_v5.scad`, current — USB corridor raised 2.5mm via `chain_raise` to meet the MacBook port). Fit dims are empirically tuned against prints
+- `cad/` — OpenSCAD enclosure, one folder per revision: `v0/` (first one-piece sketch), `v1/` (flat 2-part design — lid on top, switch housings exposed; includes its slicer project), `v2/` (recessed key well, drop-in lid with raised deck), `v3/` (drop-in USB notch with lid filler tab), `v4/` (lid split into deck + key plate, adapter shelf — first confirmed-fitting print), `v5/` (`k1_v5.scad`, current — USB corridor raised 2.5mm via `chain_raise` to meet the MacBook port); `desk/v1/` (adapter-less desk variant — board at the rear wall, its own female USB-C facing out the rear for a normal cable; body 88mm). Fit dims are empirically tuned against prints
 - `firmware/` — Pico SDK + TinyUSB vendor-HID device (RP2040-Zero; see
   `docs/superpowers/specs/2026-09-08-rp2040-port-design.md`)
 - `mac/` — Magic Keys, SwiftUI menu-bar app (macOS 14+, `IOHIDManager`)
