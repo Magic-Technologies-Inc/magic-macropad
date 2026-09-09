@@ -88,8 +88,9 @@ cap_ht      = 11.5;
 cap_overlap = 1;    // skirt drop below the housing top when seated
 
 /* ---------- USB-C slot (inner wall, near rear) ---------- */
-plug_from_rear = 11.5; // slot center from rear end (rear edge held at x=6;
-                       // the keys-side edge came in 1mm with the narrowing)
+plug_from_rear = 10;   // slot center from rear end; whole cutout shifted
+                       // 1.5mm rearward after fit test (slot spans 4.5-15.5)
+                       // so the chain sits further from the deck's key end
 slot_w = 11;           // sized for the 90-degree adapter's plug base
 slot_h = 6;
 tab_clr = 0.15;        // clearance around the lid's wall-filler tab
