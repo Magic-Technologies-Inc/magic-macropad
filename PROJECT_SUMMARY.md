@@ -20,7 +20,7 @@ actions.
 | Device model | App-required; no standalone HID-keyboard fallback |
 | Transport | Native USB, vendor-defined HID (usage page `0xFF60`), 8-byte reports |
 | Firmware stack | Pico SDK 2.x + TinyUSB (was ESP-IDF/ESP32-S3 — ported 2026-09-08) |
-| Board | RP2040-Zero (Waveshare design, hiBCTR clones); keys on GPIO 26/27/28 |
+| Board | RP2040-Zero (Waveshare design, hiBCTR clones); keys on GPIO 0/1/2 |
 | Gesture logic | Entirely in the Mac app (tap / double-tap / hold); firmware sends only down/up |
 | Mac app | SwiftUI menu-bar app, macOS 14+, `IOHIDManager` |
 | Config UI | Logitech Options-style: device render, click a key, assign actions per gesture |
