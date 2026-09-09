@@ -16,6 +16,8 @@ extension MediaCommand {
     var label: String {
         switch self {
         case .playPause: return "Play / Pause"
+        case .previousTrack: return "Previous Track"
+        case .nextTrack: return "Next Track"
         case .volumeUp: return "Volume Up"
         case .volumeDown: return "Volume Down"
         case .mute: return "Mute"
@@ -24,6 +26,8 @@ extension MediaCommand {
     var icon: String {
         switch self {
         case .playPause: return "playpause.fill"
+        case .previousTrack: return "backward.fill"
+        case .nextTrack: return "forward.fill"
         case .volumeUp: return "speaker.wave.2.fill"
         case .volumeDown: return "speaker.wave.1.fill"
         case .mute: return "speaker.slash.fill"

@@ -3,10 +3,12 @@ import AppKit
 /// Posts media keys as system-defined NSEvents (the same mechanism the
 /// keyboard's media keys use). No special permission required.
 enum MediaKey: UInt32 {
-    case playPause = 16  // NX_KEYTYPE_PLAY
-    case volumeUp = 0    // NX_KEYTYPE_SOUND_UP
-    case volumeDown = 1  // NX_KEYTYPE_SOUND_DOWN
-    case mute = 7        // NX_KEYTYPE_MUTE
+    case playPause = 16     // NX_KEYTYPE_PLAY
+    case nextTrack = 17     // NX_KEYTYPE_NEXT
+    case previousTrack = 18 // NX_KEYTYPE_PREVIOUS
+    case volumeUp = 0       // NX_KEYTYPE_SOUND_UP
+    case volumeDown = 1     // NX_KEYTYPE_SOUND_DOWN
+    case mute = 7           // NX_KEYTYPE_MUTE
 
     func post() {
         postPhase(down: true)

@@ -37,6 +37,8 @@ final class ActionEngine {
     private func mediaKey(for command: MediaCommand) -> MediaKey {
         switch command {
         case .playPause: return .playPause
+        case .previousTrack: return .previousTrack
+        case .nextTrack: return .nextTrack
         case .volumeUp: return .volumeUp
         case .volumeDown: return .volumeDown
         case .mute: return .mute

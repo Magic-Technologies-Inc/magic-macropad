@@ -12,7 +12,7 @@ public enum KeyModifier: String, Codable, CaseIterable, Sendable {
 }
 
 public enum MediaCommand: String, Codable, CaseIterable, Sendable {
-    case playPause, volumeUp, volumeDown, mute
+    case playPause, previousTrack, nextTrack, volumeDown, volumeUp, mute
 }
 
 /// Persisted to disk as JSON via synthesized Codable: case names and associated-value
