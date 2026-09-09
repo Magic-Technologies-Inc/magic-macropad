@@ -47,7 +47,10 @@ struct MenuBarPanel: View {
                         .transition(.opacity)
                 }
             }
-            .frame(height: 290)
+            // Height matches the main card exactly (222pt holder + 4pt top inset
+            // + 14pt card padding top & bottom) so no dead space sits below it;
+            // the picker fills this region and scrolls.
+            .frame(height: 254)
             .padding(.top, 14)
             footer.padding(.top, 14)
         }
