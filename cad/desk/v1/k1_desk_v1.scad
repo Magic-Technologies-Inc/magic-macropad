@@ -85,24 +85,16 @@ seat_depth  = relief; // shares the relieved-ledge height
 comp_pocket = 4.5;    // deck underside pocket over the board — also the
                       // cable-plug headroom over the connector (top 2.7)
 
-/* ---------- Board retention nubs ----------
-   Cable forces act above the PCB, so plugging tilts the board rear-up
-   and unplugging tilts it front-up — and the deck can't hold it down:
-   the rocker dips ~1.3mm over the seat, so a deck boss would block the
-   press-to-open. The tray pins the board's FRONT corners with wedge
-   nubs on the seat pocket's front wall; the rear needs none — the
-   connector sits captured in the port opening (it can lift only ~0.6
-   before its shell meets the tab) and the rear wall band takes the
-   unplug yank. The triangular profile keeps both faces at 45 degrees
-   so the tray prints them cleanly upright (a round nub's droopy
-   underside was the fit-critical surface). Install connector-first
-   into the port, then press the front edge down past the nubs; pry
-   it back up to remove. RP2040-Zero corners are pad-free, but keep
-   soldered key wires clear of the nub spots. */
-nub_prot = 0.5;  // protrusion off the pocket wall; ~0.25 over the PCB edge
-nub_len  = 2.5;
-nub_ys   = [4, body_wid - 4]; // corner centers, clear of the USB notch
-nub_z0   = 8.0;  // underside root at the wall: PCB top (7.9) + 0.1
+/* ---------- Board seat pillars ----------
+   The board sits loose in its pocket (no retention nubs): the
+   connector captured in the port opening limits rear lift to ~0.6
+   before its shell meets the tab, the deck hovers 0.6 over the PCB,
+   and the rear wall band takes the unplug yank. The pillars continue
+   the seat pocket's front wall across the cavity — it otherwise
+   exists only on the 1.5mm side ledges — so plug insertion thrust
+   bears on full-height posts instead of two thin strips. */
+pillar_len = 2.5;
+pillar_ys  = [4, body_wid - 4]; // near the pocket's front corners
 
 /* ---------- Keys (MX) ---------- */
 key_count       = 3;
@@ -178,8 +170,7 @@ module tray() {
         // ledge relief rear of the pivot so the lid can rock down there —
         // only under the deck's unpocketed side strips (the deck's rear
         // is open-bottomed): v5's full-width relief would shave away the
-        // rear wall band the board bears on when a cable is yanked out,
-        // and the rear retention nubs' roots with it
+        // rear wall band the board bears on when a cable is yanked out
         for (y0 = [wall_upper, body_wid - wall_upper - 1.5])
             translate([wall_upper, y0, tray_ht - relief])
                 cube([pivot_x - wall_upper, 1.5, relief + 0.01]);
@@ -194,35 +185,12 @@ module tray() {
         translate([seat_x0, (body_wid - seat_wid) / 2, tray_ht - seat_depth])
             cube([seat_len, seat_wid, seat_depth + 0.01]);
     }
-    // pillars continuing the seat pocket's front wall across the cavity:
-    // that wall otherwise exists only on the 1.5mm side ledges, so the
-    // front nubs would overhang open cavity (unprintable, unanchored)
-    // and plug thrust would bear on the two ledge strips alone — these
-    // back both, floor to ledge plane
-    for (yc = nub_ys)
-        translate([seat_x0 + seat_len, yc - nub_len / 2, floor_th - 0.01])
-            cube([1.2, nub_len, tray_ht - floor_th + 0.01]);
-    // board retention nubs on the seat pocket's front wall, protruding
-    // rearward over the PCB corners; the wall-embedded tails are
-    // trimmed flush above the ledge plane so they don't poke into the
-    // seated deck's underside
-    for (yc = nub_ys)
-        difference() {
-            translate([seat_x0 + seat_len, yc - nub_len / 2, nub_z0])
-                mirror([1, 0, 0]) board_nub();
-            translate([seat_x0 + seat_len, yc - nub_len / 2 - 1, tray_ht])
-                cube([1, nub_len + 2, 2 * nub_prot]);
-        }
+    // seat pillars: continue the pocket's front wall across the cavity
+    // as bearing for plug insertion thrust (see the pillars section)
+    for (yc = pillar_ys)
+        translate([seat_x0 + seat_len, yc - pillar_len / 2, floor_th - 0.01])
+            cube([1.2, pillar_len, tray_ht - floor_th + 0.01]);
     }
-}
-
-// Wedge retention nub: triangular X-Z profile extruded nub_len along Y,
-// origin on the pocket wall face at the underside root, protruding +X.
-// Tip sits nub_prot up/out at the ledge plane; the 0.1 tail embeds in
-// the wall so the union stays manifold.
-module board_nub() {
-    translate([0, nub_len, 0]) rotate([90, 0, 0]) linear_extrude(nub_len)
-        polygon([[-0.1, 0], [nub_prot, nub_prot], [-0.1, 2 * nub_prot]]);
 }
 
 // Rear edge of the key well: caps travel freely from here to the front wall;
