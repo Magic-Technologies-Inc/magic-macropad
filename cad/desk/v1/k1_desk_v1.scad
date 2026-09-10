@@ -182,9 +182,14 @@ module tray() {
                        tray_ht + lid_th + well_depth / 2])
                 rotate([-90, 0, 0])
                     cylinder(h = rear_clip_len + 1.5, r = snap_grv_r);
-        // ledge relief rear of the pivot so the lid can rock down there
-        translate([wall_upper, wall_upper, tray_ht - relief])
-            cube([pivot_x - wall_upper, well_wid, relief + 0.01]);
+        // ledge relief rear of the pivot so the lid can rock down there —
+        // only under the deck's unpocketed side strips (the deck's rear
+        // is open-bottomed): v5's full-width relief would shave away the
+        // rear wall band the board bears on when a cable is yanked out,
+        // and the rear retention nubs' roots with it
+        for (y0 = [wall_upper, body_wid - wall_upper - 1.5])
+            translate([wall_upper, y0, tray_ht - relief])
+                cube([pivot_x - wall_upper, 1.5, relief + 0.01]);
         // key plate snap grooves near the front
         for (y = [wall_upper, body_wid - wall_upper])
             translate([plate_snap_x - plate_snap_len / 2 - 0.75, y,
