@@ -83,6 +83,22 @@ seat_depth  = relief; // shares the relieved-ledge height
 comp_pocket = 4.5;    // deck underside pocket over the board — also the
                       // cable-plug headroom over the connector (top 2.7)
 
+/* ---------- Board retention nubs ----------
+   Cable forces act above the PCB, so plugging tilts the board rear-up
+   and unplugging tilts it front-up — and the deck can't hold it down:
+   the rocker dips ~1.3mm over the seat, so a deck boss would block the
+   press-to-open. The tray pins the board instead: round nubs on the
+   seat pocket's rear and front walls overhang the PCB corners by 0.25
+   with their undersides 0.1 over the PCB top. Install rear-first
+   (board tilted, rear edge slid under its nubs), then press the front
+   edge down past its nubs — the PCB bows and the round profiles cam
+   it through; lever the front edge up to remove. RP2040-Zero corners
+   are pad-free, but keep soldered key wires clear of the nub spots. */
+nub_r   = 0.4;   // nub radius; axis sits 0.1 proud of the pocket wall
+nub_len = 2.5;
+nub_ys  = [4, body_wid - 4]; // corner centers, clear of the USB notch
+nub_z   = 8.4;   // axis height: underside = PCB top (7.9) + 0.1
+
 /* ---------- Keys (MX) ---------- */
 key_count       = 3;
 key_pitch       = 19;    // MX standard
@@ -133,6 +149,7 @@ module rounded_box(l, w, h, r) {
 // Frame: X rear->front, Y centered on the port, Z up.
 
 module tray() {
+    union() {
     difference() {
         rounded_box(body_len, body_wid, body_ht, body_rad);
         // electronics cavity (lower walls)
@@ -172,6 +189,24 @@ module tray() {
         // bites into the rear wall so the connector reaches the port
         translate([seat_x0, (body_wid - seat_wid) / 2, tray_ht - seat_depth])
             cube([seat_len, seat_wid, seat_depth + 0.01]);
+    }
+    // board retention nubs on the seat pocket's rear and front walls;
+    // the wall-embedded halves are trimmed flush above the ledge plane
+    // so they don't poke into the seated deck's underside
+    for (yc = nub_ys) {
+        difference() { // rear pair, protruding forward over the PCB
+            translate([seat_x0 + 0.1, yc - nub_len / 2, nub_z])
+                rotate([-90, 0, 0]) cylinder(h = nub_len, r = nub_r);
+            translate([seat_x0 - nub_r - 1, yc - nub_len / 2 - 1, tray_ht])
+                cube([nub_r + 1, nub_len + 2, nub_r + 1]);
+        }
+        difference() { // front pair, protruding rearward over the PCB
+            translate([seat_x0 + seat_len - 0.1, yc - nub_len / 2, nub_z])
+                rotate([-90, 0, 0]) cylinder(h = nub_len, r = nub_r);
+            translate([seat_x0 + seat_len, yc - nub_len / 2 - 1, tray_ht])
+                cube([nub_r + 1, nub_len + 2, nub_r + 1]);
+        }
+    }
     }
 }
 
@@ -231,11 +266,12 @@ module lid() {
                         cylinder(h = rear_clip_len, r = snap_r);
         }
         // deck underside pocket over the board's USB connector/components;
-        // reaches the deck's rear face (the seat starts at the rear wall)
-        // so the connector top and the plug shell have headroom, and stops
-        // short of the deck/plate seam so the roof lip stays intact
-        translate([seat_x0, (body_wid - seat_wid) / 2 + 0.5, -1])
-            cube([min(seat_len, deck_bot_end - 0.5 - seat_x0),
+        // opens through the deck's rear face (the seat starts at the rear
+        // wall, and the rear retention nubs poke above the ledge plane) —
+        // the tab and rear clips root in the deck above the pocket — and
+        // stops short of the deck/plate seam so the roof lip stays intact
+        translate([wall_upper + fit_clr - 0.01, (body_wid - seat_wid) / 2 + 0.5, -1])
+            cube([seat_x0 + seat_len - (wall_upper + fit_clr - 0.01),
                   seat_wid - 1, comp_pocket + 1]);
         // MX plate cutouts — switches drop in from the top and clip under
         for (i = [0 : key_count - 1])
