@@ -46,30 +46,28 @@ tray_ht = floor_th + cav_depth;               // ledge height, 8.5
 body_ht = tray_ht + lid_th + well_depth;      // full shell, 17
 
 /* ---------- Lid retention: press-to-open rocker ----------
-   Snap bumps only at the FRONT of the deck; the rear (USB end) ledge is
-   relieved so the lid can dip there. Press the deck above the port ->
-   the lid pivots on the ledge edge at pivot_x -> the front pops up out of
-   its grooves. ~0.25mm engagement; walls flex. Tune snap_r/snap_grv_r if
-   the lid is too loose or won't click in. Unlike v5 the board sits IN
-   the dip zone, and the deck can only dip ~0.6 before its underside
-   edge strips meet the PCB (and the tab the USB shell) — so the pivot
-   sits well rearward: lever 1.4-10 vs overhang 10-24 releases the
-   snaps at only ~0.15 rear dip. */
+   Side snap bumps at the deck's front AND near its rear (the rear pair
+   sits on the side walls — the port notch leaves no room on the rear
+   face for v5's rear clip); the rear (USB end) ledge is relieved so
+   the lid can dip there. Press the deck above the port -> the lid
+   pivots on the ledge edge at pivot_x -> the front pops up out of its
+   grooves, while the rear bumps ride their grooves' 0.1 radial slop
+   (they cam fully out once the freed lid is lifted). ~0.25mm
+   engagement; walls flex. Tune snap_r/snap_grv_r if the lid is too
+   loose or won't click in. Unlike v5 the board sits IN the dip zone,
+   and the deck can only dip ~0.6 before its underside edge strips
+   meet the PCB (and the tab the USB shell) — so the pivot sits well
+   rearward: lever 1.4-10 vs overhang 10-24 releases the front snaps
+   at only ~0.15 rear dip. */
 snap_r     = 0.4;    // bump radius (proud of the lid side face)
 snap_grv_r = 0.5;    // groove radius in the tray wall (slop built in)
 snap_len   = 6;      // bump length along the body
-snap_xs    = [24];   // front of the deck only
+snap_xs    = [6, 24]; // rear pair + front pair, both on the side walls;
+                      // the rear pair sits clear of the well's rounded
+                      // corners (faces are flat only from x ~2.4)
 pivot_x    = 10;     // ledge support ends here; relieved rearward — must
                      // stay rear of the PCB/tab contact points (see above)
 relief     = 1.6;    // rear dip travel (drives the front lift)
-
-/* ---------- Rear clips ----------
-   v5's single centered rear clip is displaced by the port notch, so two
-   shorter clips flank it — bumps on the deck's rear end face clicking
-   into grooves in the rear upper wall's remaining side segments. They
-   pop down out of their grooves when the rocker is pressed. */
-rear_clip_len = 3;
-rear_clip_ys  = [3.5, body_wid - 3.5]; // centers, inside the wall segments
 
 /* ---------- RP2040-Zero board seat ----------
    The board bridges the cavity, resting its long edges on the widened
@@ -91,15 +89,16 @@ comp_pocket = 4.5;    // deck underside pocket over the board — also the
    Cable forces act above the PCB, so plugging tilts the board rear-up
    and unplugging tilts it front-up — and the deck can't hold it down:
    the rocker dips ~1.3mm over the seat, so a deck boss would block the
-   press-to-open. The tray pins the board instead: wedge nubs on the
-   seat pocket's rear and front walls overhang the PCB corners. The
-   triangular profile keeps both faces at 45 degrees so the tray prints
-   them cleanly upright (a round nub's droopy underside was the
-   fit-critical surface). Install by pressing the board straight down —
-   both pairs' top chamfers cam it in as the PCB bows — and remove by
-   prying an edge up; the opposing 45-degree faces trap it otherwise.
-   RP2040-Zero corners are pad-free, but keep soldered key wires clear
-   of the nub spots. */
+   press-to-open. The tray pins the board's FRONT corners with wedge
+   nubs on the seat pocket's front wall; the rear needs none — the
+   connector sits captured in the port opening (it can lift only ~0.6
+   before its shell meets the tab) and the rear wall band takes the
+   unplug yank. The triangular profile keeps both faces at 45 degrees
+   so the tray prints them cleanly upright (a round nub's droopy
+   underside was the fit-critical surface). Install connector-first
+   into the port, then press the front edge down past the nubs; pry
+   it back up to remove. RP2040-Zero corners are pad-free, but keep
+   soldered key wires clear of the nub spots. */
 nub_prot = 0.5;  // protrusion off the pocket wall; ~0.25 over the PCB edge
 nub_len  = 2.5;
 nub_ys   = [4, body_wid - 4]; // corner centers, clear of the USB notch
@@ -176,12 +175,6 @@ module tray() {
                        tray_ht + lid_th + well_depth / 2])
                 rotate([0, 90, 0])
                     cylinder(h = snap_len + 1.5, r = snap_grv_r);
-        // rear clip grooves flanking the port notch
-        for (yc = rear_clip_ys)
-            translate([wall_upper, yc - rear_clip_len / 2 - 0.75,
-                       tray_ht + lid_th + well_depth / 2])
-                rotate([-90, 0, 0])
-                    cylinder(h = rear_clip_len + 1.5, r = snap_grv_r);
         // ledge relief rear of the pivot so the lid can rock down there —
         // only under the deck's unpocketed side strips (the deck's rear
         // is open-bottomed): v5's full-width relief would shave away the
@@ -209,22 +202,17 @@ module tray() {
     for (yc = nub_ys)
         translate([seat_x0 + seat_len, yc - nub_len / 2, floor_th - 0.01])
             cube([1.2, nub_len, tray_ht - floor_th + 0.01]);
-    // board retention nubs on the seat pocket's rear and front walls;
-    // the wall-embedded tails are trimmed flush above the ledge plane
-    // so they don't poke into the seated deck's underside
-    for (yc = nub_ys) {
-        difference() { // rear pair, protruding forward over the PCB
-            translate([seat_x0, yc - nub_len / 2, nub_z0]) board_nub();
-            translate([seat_x0 - 1, yc - nub_len / 2 - 1, tray_ht])
-                cube([1, nub_len + 2, 2 * nub_prot]);
-        }
-        difference() { // front pair, protruding rearward over the PCB
+    // board retention nubs on the seat pocket's front wall, protruding
+    // rearward over the PCB corners; the wall-embedded tails are
+    // trimmed flush above the ledge plane so they don't poke into the
+    // seated deck's underside
+    for (yc = nub_ys)
+        difference() {
             translate([seat_x0 + seat_len, yc - nub_len / 2, nub_z0])
                 mirror([1, 0, 0]) board_nub();
             translate([seat_x0 + seat_len, yc - nub_len / 2 - 1, tray_ht])
                 cube([1, nub_len + 2, 2 * nub_prot]);
         }
-    }
     }
 }
 
@@ -284,19 +272,10 @@ module lid() {
                 translate([x - snap_len / 2, y, lid_th + well_depth / 2])
                     rotate([0, 90, 0])
                         cylinder(h = snap_len, r = snap_r);
-            // rear clips flanking the port: bumps on the deck's rear end
-            // face — resist rear lift, pop down out of their grooves when
-            // the rocker is pressed to open
-            for (yc = rear_clip_ys)
-                translate([wall_upper + fit_clr, yc - rear_clip_len / 2,
-                           lid_th + well_depth / 2])
-                    rotate([-90, 0, 0])
-                        cylinder(h = rear_clip_len, r = snap_r);
         }
         // deck underside pocket over the board's USB connector/components;
         // opens through the deck's rear face (the seat starts at the rear
-        // wall, and the rear retention nubs poke above the ledge plane) —
-        // the tab and rear clips root in the deck above the pocket — and
+        // wall) — the tab roots in the deck above the pocket — and
         // stops short of the deck/plate seam so the roof lip stays intact
         translate([wall_upper + fit_clr - 0.01, (body_wid - seat_wid) / 2 + 0.5, -1])
             cube([seat_x0 + seat_len - (wall_upper + fit_clr - 0.01),
