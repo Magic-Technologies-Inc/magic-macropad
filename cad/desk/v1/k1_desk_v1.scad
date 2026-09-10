@@ -50,13 +50,17 @@ body_ht = tray_ht + lid_th + well_depth;      // full shell, 17
    relieved so the lid can dip there. Press the deck above the port ->
    the lid pivots on the ledge edge at pivot_x -> the front pops up out of
    its grooves. ~0.25mm engagement; walls flex. Tune snap_r/snap_grv_r if
-   the lid is too loose or won't click in. Geometry rescaled from v5 for
-   the short body: lever 1.4-18, overhang 18-29 -> ~1mm front lift. */
+   the lid is too loose or won't click in. Unlike v5 the board sits IN
+   the dip zone, and the deck can only dip ~0.6 before its underside
+   edge strips meet the PCB (and the tab the USB shell) — so the pivot
+   sits well rearward: lever 1.4-10 vs overhang 10-24 releases the
+   snaps at only ~0.15 rear dip. */
 snap_r     = 0.4;    // bump radius (proud of the lid side face)
 snap_grv_r = 0.5;    // groove radius in the tray wall (slop built in)
 snap_len   = 6;      // bump length along the body
 snap_xs    = [24];   // front of the deck only
-pivot_x    = 18;     // ledge support ends here; relieved rearward
+pivot_x    = 10;     // ledge support ends here; relieved rearward — must
+                     // stay rear of the PCB/tab contact points (see above)
 relief     = 1.6;    // rear dip travel (drives the front lift)
 
 /* ---------- Rear clips ----------
@@ -192,6 +196,14 @@ module tray() {
         translate([seat_x0, (body_wid - seat_wid) / 2, tray_ht - seat_depth])
             cube([seat_len, seat_wid, seat_depth + 0.01]);
     }
+    // pillars continuing the seat pocket's front wall across the cavity:
+    // that wall otherwise exists only on the 1.5mm side ledges, so the
+    // front nubs would overhang open cavity (unprintable, unanchored)
+    // and plug thrust would bear on the two ledge strips alone — these
+    // back both, floor to ledge plane
+    for (yc = nub_ys)
+        translate([seat_x0 + seat_len, yc - nub_len / 2, floor_th - 0.01])
+            cube([1.2, nub_len, tray_ht - floor_th + 0.01]);
     // board retention nubs on the seat pocket's rear and front walls;
     // the wall-embedded tails are trimmed flush above the ledge plane
     // so they don't poke into the seated deck's underside
@@ -254,8 +266,9 @@ module lid() {
             }
             // tab that re-fills the rear wall above the USB notch; bottom
             // flush with the opening top so the closed port is exactly
-            // usb_h (4.6mm) tall. NOTE: rocker presses dip the tab ~1mm
-            // into the opening — unplug the cable before opening the lid.
+            // usb_h (4.6mm) tall. Rocker presses dip the tab ~0.2 into
+            // the opening at snap release — clears a plugged-in shell
+            // (0.6 below), but unplug before opening to be safe.
             translate([tab_clr, (body_wid - usb_w) / 2 + tab_clr,
                        usb_z + usb_h - tray_ht])
                 cube([wall_upper + 0.3, usb_w - 2 * tab_clr,
