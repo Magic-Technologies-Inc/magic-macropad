@@ -15,13 +15,8 @@ pico_generate_pio_header(k1_firmware ${CMAKE_CURRENT_LIST_DIR}/main/ws2812.pio)
 target_include_directories(k1_firmware PRIVATE main)
 target_link_libraries(k1_firmware pico_stdlib pico_util hardware_pio tinyusb_device)
 
-# Debug logs on UART1 (GPIO 8/9, 115200) — keys occupy UART0's default
-# GPIO 0/1. USB stays dedicated to the HID interface.
-target_compile_definitions(k1_firmware PRIVATE
-    PICO_DEFAULT_UART=1
-    PICO_DEFAULT_UART_TX_PIN=8
-    PICO_DEFAULT_UART_RX_PIN=9
-)
+# Debug logs on UART0 (GPIO 0/1, 115200); USB stays dedicated to the HID
+# interface.
 pico_enable_stdio_uart(k1_firmware 1)
 pico_enable_stdio_usb(k1_firmware 0)
 

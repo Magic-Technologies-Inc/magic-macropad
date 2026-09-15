@@ -25,9 +25,9 @@ Hold BOOT while plugging the board in, then drag the UF2 onto the mounted
   `cc -I main tests/host/test_debounce.c main/debounce.c -o /tmp/test_debounce && /tmp/test_debounce`
 - Hardware-in-loop: `tools/smoke_test.py` (see its docstring)
 
-Key GPIOs are defined in `main/keys.c` (`K1_KEY_GPIOS`) — GPIO 0/1/2,
-active-low (key to GND), internal pull-ups. Debug logs: UART1 on GPIO 8/9 at
-115200 (optional to wire; keys occupy UART0's default pins).
+Key GPIOs are defined in `main/keys.c` (`K1_KEY_GPIOS`) — GPIO 10/11/12,
+active-low (key to GND), internal pull-ups. Debug logs: UART0 on GPIO 0/1 at
+115200 (optional to wire).
 
 The onboard WS2812 (GPIO 16) shows a dim per-key color while a key is held
 (red/green/blue for keys 0/1/2) — `main/led.c`.

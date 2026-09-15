@@ -4,10 +4,8 @@
 #include "pico/stdlib.h"
 #include <stdio.h>
 
-// Active-low keys, wired key -> GND. GP0/1/2 corner of the RP2040-Zero
-// (matches the CircuitPython bring-up script). Debug UART lives on
-// UART1 GPIO 8/9 because keys occupy UART0's default pins.
-static const uint K1_KEY_GPIOS[K1_KEY_COUNT] = {0, 1, 2};
+// Active-low keys, wired key -> GND.
+static const uint K1_KEY_GPIOS[K1_KEY_COUNT] = {10, 11, 12};
 
 static queue_t s_event_queue;
 static k1_debounce_t s_db[K1_KEY_COUNT];
