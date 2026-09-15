@@ -128,9 +128,9 @@ final class AppModel: ObservableObject {
         }
     }
 
-    #if DEBUG
     private var virtualSeq: UInt8 = 0
-    /// Simulates a physical press: down now, up after `duration`.
+    /// Simulates a physical press: down now, up after `duration`. Exposed in all
+    /// builds so the in-app "Test keys" menu works without hardware.
     func simulatePress(key: Int, duration: TimeInterval = 0.1) {
         virtualSeq &+= 1
         pipeline?.handle(KeyEvent(key: key, isDown: true, seq: virtualSeq))
@@ -140,5 +140,4 @@ final class AppModel: ObservableObject {
             self?.pipeline?.handle(KeyEvent(key: key, isDown: false, seq: seq))
         }
     }
-    #endif
 }

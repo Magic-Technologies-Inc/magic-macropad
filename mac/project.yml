@@ -14,6 +14,8 @@ targets:
       - path: MagicKeys/Sources
       - path: MagicKeys/Resources
         buildPhase: resources
+      - path: MagicKeys/MagicIcon.icon   # Icon Composer app icon (Xcode 26)
+        type: file
     dependencies:
       - package: MagicKeysCore
     settings:
@@ -22,5 +24,6 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Magic Keys
         INFOPLIST_KEY_LSUIElement: YES   # menu-bar app, no Dock icon
+        ASSETCATALOG_COMPILER_APPICON_NAME: MagicIcon
         CODE_SIGN_IDENTITY: "-"          # ad-hoc signing for dev builds
         SWIFT_VERSION: "5.9"

@@ -198,9 +198,7 @@ struct MenuBarPanel: View {
                     .foregroundStyle(MagicColor.textSecondary)
             }
             Spacer(minLength: 8)
-            #if DEBUG
             virtualK1Menu
-            #endif
             Toggle(isOn: launchAtLogin) {
                 Text("Launch at Login").font(MagicFont.text(12, weight: .medium))
             }
@@ -219,7 +217,6 @@ struct MenuBarPanel: View {
         .padding(.horizontal, 2)
     }
 
-    #if DEBUG
     private var virtualK1Menu: some View {
         Menu {
             ForEach(0..<3, id: \.self) { key in
@@ -246,7 +243,6 @@ struct MenuBarPanel: View {
         .foregroundStyle(MagicColor.accentBlue)
         .help("Simulate key presses without hardware")
     }
-    #endif
 
     private var launchAtLogin: Binding<Bool> {
         Binding(
