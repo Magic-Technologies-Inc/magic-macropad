@@ -35,6 +35,31 @@ extension MediaCommand {
     }
 }
 
+extension SystemCommand {
+    var label: String {
+        switch self {
+        case .toggleMicMute: return "Mute / Unmute Mic"
+        case .lockScreen: return "Lock Screen"
+        case .sleepDisplay: return "Sleep Display"
+        case .toggleDarkMode: return "Toggle Dark Mode"
+        case .screenshotRegion: return "Screenshot Region"
+        case .missionControl: return "Mission Control"
+        case .toggleKeepAwake: return "Keep Awake"
+        }
+    }
+    var icon: String {
+        switch self {
+        case .toggleMicMute: return "mic.slash.fill"
+        case .lockScreen: return "lock.fill"
+        case .sleepDisplay: return "display"
+        case .toggleDarkMode: return "circle.lefthalf.filled"
+        case .screenshotRegion: return "camera.viewfinder"
+        case .missionControl: return "square.grid.3x3.fill"
+        case .toggleKeepAwake: return "cup.and.saucer.fill"
+        }
+    }
+}
+
 extension ActionConfig {
     /// SF Symbol shown in the gesture row and picker.
     var icon: String {
@@ -43,6 +68,8 @@ extension ActionConfig {
         case .openURL: return "safari"
         case .keystroke: return "keyboard"
         case .media(let command): return command.icon
+        case .pasteText: return "doc.on.clipboard"
+        case .system(let command): return command.icon
         case .shellScript: return "terminal"
         }
     }
@@ -58,6 +85,10 @@ extension ActionConfig {
             return "Keystroke"
         case .media(let command):
             return command.label
+        case .pasteText(let text):
+            return text.isEmpty ? "Paste Text" : text
+        case .system(let command):
+            return command.label
         case .shellScript(let script):
             return script.isEmpty ? "Shell Script" : script
         }
@@ -68,7 +99,7 @@ extension ActionConfig {
         switch self {
         case .keystroke(let keyCode, let modifiers):
             return modifiers.map(\.symbol).joined() + KeyName.forCode(keyCode)
-        case .openApp, .openURL, .media, .shellScript:
+        case .openApp, .openURL, .media, .pasteText, .system, .shellScript:
             return ""
         }
     }
@@ -86,13 +117,14 @@ extension ActionConfig {
 
 /// The picker's action catalog: parameterised types plus ready-made media commands.
 enum ActionType: String, CaseIterable, Identifiable {
-    case openApp, openURL, keystroke, shellScript
+    case openApp, openURL, keystroke, pasteText, shellScript
     var id: String { rawValue }
     var title: String {
         switch self {
         case .openApp: return "Open App…"
         case .openURL: return "Open URL…"
         case .keystroke: return "Keystroke…"
+        case .pasteText: return "Paste Text…"
         case .shellScript: return "Shell Script…"
         }
     }
@@ -101,6 +133,7 @@ enum ActionType: String, CaseIterable, Identifiable {
         case .openApp: return "app.dashed"
         case .openURL: return "safari"
         case .keystroke: return "keyboard"
+        case .pasteText: return "doc.on.clipboard"
         case .shellScript: return "terminal"
         }
     }
@@ -109,6 +142,7 @@ enum ActionType: String, CaseIterable, Identifiable {
         case .openApp: return .openApp(bundleID: "")
         case .openURL: return .openURL(urlString: "")
         case .keystroke: return .keystroke(keyCode: 0, modifiers: [])
+        case .pasteText: return .pasteText(text: "")
         case .shellScript: return .shellScript(script: "")
         }
     }

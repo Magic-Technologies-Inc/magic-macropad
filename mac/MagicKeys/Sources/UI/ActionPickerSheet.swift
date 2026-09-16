@@ -33,8 +33,9 @@ struct ActionPickerSheet: View {
         case .openApp: return .params(.openApp, current!)
         case .openURL: return .params(.openURL, current!)
         case .keystroke: return .params(.keystroke, current!)
+        case .pasteText: return .params(.pasteText, current!)
         case .shellScript: return .params(.shellScript, current!)
-        case .media, .none: return .list  // media has nothing to edit → show the list
+        case .media, .system, .none: return .list  // ready-made → show the list
         }
     }
 
@@ -118,6 +119,11 @@ struct ActionPickerSheet: View {
                         onSet(.media(command: command))
                     }
                 }
+                ForEach(SystemCommand.allCases, id: \.self) { command in
+                    row(icon: command.icon, name: command.label, hint: "") {
+                        onSet(.system(command: command))
+                    }
+                }
             }
         }
         .frame(maxHeight: .infinity)
@@ -173,6 +179,7 @@ private struct ParamForm: View {
     @State private var bundleID = ""
     @State private var urlString = ""
     @State private var script = ""
+    @State private var text = ""
     @State private var keyCode: UInt16 = 0
     @State private var modifiers: [KeyModifier] = []
 
@@ -215,6 +222,23 @@ private struct ParamForm: View {
             TextField("https://usemagic.io", text: $urlString).textFieldStyle(.roundedBorder)
         case .keystroke:
             KeyRecorderField(keyCode: $keyCode, modifiers: $modifiers)
+        case .pasteText:
+            ScriptEditor(text: $text)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(MagicColor.surfacePageAlt)
+                        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(MagicColor.borderDefault, lineWidth: 1)))
+                .overlay(alignment: .topLeading) {
+                    if text.isEmpty {
+                        Text("Text to paste — a snippet, email, address, template…")
+                            .font(.system(size: 13))
+                            .foregroundStyle(MagicColor.textTertiary)
+                            .padding(.leading, 10)
+                            .padding(.top, 10)
+                            .allowsHitTesting(false)
+                    }
+                }
         case .shellScript:
             ScriptEditor(text: $script)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -299,8 +323,9 @@ private struct ParamForm: View {
         case .openApp(let b): bundleID = b
         case .openURL(let u): urlString = u
         case .keystroke(let c, let m): keyCode = c; modifiers = m
+        case .pasteText(let t): text = t
         case .shellScript(let s): script = s
-        case .media: break
+        case .media, .system: break
         }
     }
 
@@ -309,6 +334,7 @@ private struct ParamForm: View {
         case .openApp: return .openApp(bundleID: bundleID)
         case .openURL: return .openURL(urlString: urlString)
         case .keystroke: return .keystroke(keyCode: keyCode, modifiers: modifiers)
+        case .pasteText: return .pasteText(text: text)
         case .shellScript: return .shellScript(script: script)
         }
     }

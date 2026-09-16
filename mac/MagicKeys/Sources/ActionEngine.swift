@@ -33,8 +33,102 @@ final class ActionEngine {
             guard ensureAccessibility() else { return }
             mediaKey(for: command).post()
 
+        case .pasteText(let text):
+            // Put the text on the pasteboard and synthesize ⌘V into the front app.
+            guard ensureAccessibility() else { return }
+            pasteText(text)
+
+        case .system(let command):
+            runSystem(command)
+
         case .shellScript(let script):
             runShell(script)
+        }
+    }
+
+    // MARK: Paste Text
+
+    private func pasteText(_ text: String) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(text, forType: .string)
+        // Let the pasteboard settle before the keystroke, or the front app can
+        // paste stale contents.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            self?.postKeystroke(keyCode: 9, modifiers: [.command])  // V
+        }
+    }
+
+    // MARK: System actions
+
+    /// A caffeinate process kept alive while "keep awake" is toggled on.
+    private var keepAwakeProcess: Process?
+
+    private func runSystem(_ command: SystemCommand) {
+        switch command {
+        case .toggleMicMute:
+            // Standard Additions volume commands — no Automation permission.
+            runOSAScript([
+                "if (input volume of (get volume settings)) > 0 then",
+                "set volume input volume 0",
+                "else",
+                "set volume input volume 100",
+                "end if",
+            ])
+        case .lockScreen:
+            guard ensureAccessibility() else { return }
+            postKeystroke(keyCode: 12, modifiers: [.command, .control])  // ⌃⌘Q = Q
+
+        case .sleepDisplay:
+            runProcess("/usr/bin/pmset", ["displaysleepnow"])
+
+        case .toggleDarkMode:
+            runOSAScript(["tell application \"System Events\" to tell appearance preferences to set dark mode to not dark mode"])
+
+        case .screenshotRegion:
+            runProcess("/usr/sbin/screencapture", ["-ic"])  // interactive region → clipboard
+
+        case .missionControl:
+            NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Mission Control.app"))
+
+        case .toggleKeepAwake:
+            toggleKeepAwake()
+        }
+    }
+
+    private func toggleKeepAwake() {
+        if let process = keepAwakeProcess, process.isRunning {
+            process.terminate()
+            keepAwakeProcess = nil
+            notifyInfo("Sleep allowed — Magic Keys is no longer keeping this Mac awake.")
+        } else {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/caffeinate")
+            process.arguments = ["-dimsu"]  // display, idle, disk, system; keep awake
+            do {
+                try process.run()
+                keepAwakeProcess = process
+                notifyInfo("Keeping this Mac awake — tap again to allow sleep.")
+            } catch {
+                notifyFailure("Couldn't start caffeinate: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func runOSAScript(_ lines: [String]) {
+        var args: [String] = []
+        for line in lines { args.append("-e"); args.append(line) }
+        runProcess("/usr/bin/osascript", args)
+    }
+
+    private func runProcess(_ path: String, _ arguments: [String]) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: path)
+        process.arguments = arguments
+        do {
+            try process.run()
+        } catch {
+            notifyFailure("Couldn't run \((path as NSString).lastPathComponent): \(error.localizedDescription)")
         }
     }
 
@@ -96,6 +190,16 @@ final class ActionEngine {
 
     private func notifyFailure(_ message: String) {
         NSLog("MagicKeys: action failed — \(message)")
+        postNotification(message)
+    }
+
+    /// A neutral status notification (e.g. a toggle's new state), so actions with
+    /// no visible effect still confirm they ran.
+    private func notifyInfo(_ message: String) {
+        postNotification(message)
+    }
+
+    private func postNotification(_ message: String) {
         let center = UNUserNotificationCenter.current()
         center.requestAuthorization(options: [.alert]) { granted, _ in
             guard granted else { return }

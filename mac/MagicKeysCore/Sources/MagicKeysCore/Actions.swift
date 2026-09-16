@@ -15,14 +15,29 @@ public enum MediaCommand: String, Codable, CaseIterable, Sendable {
     case playPause, previousTrack, nextTrack, volumeDown, volumeUp, mute
 }
 
+/// One-tap macOS system actions the app knows how to perform on its own, so the
+/// user picks from a menu instead of writing a shell script. Ordered as shown in
+/// the picker.
+public enum SystemCommand: String, Codable, CaseIterable, Sendable {
+    case toggleMicMute        // mute/unmute the system audio input
+    case lockScreen           // lock immediately (⌃⌘Q)
+    case sleepDisplay         // turn the display off
+    case toggleDarkMode       // switch between light and dark appearance
+    case screenshotRegion     // interactive region capture → clipboard
+    case missionControl       // open Mission Control
+    case toggleKeepAwake      // caffeinate on/off (prevent sleep)
+}
+
 /// Persisted to disk as JSON via synthesized Codable: case names and associated-value
 /// labels ARE the wire format. Renaming any of them breaks existing config files —
-/// add explicit CodingKeys before renaming.
+/// add explicit CodingKeys before renaming. New cases are additive and safe.
 public enum ActionConfig: Codable, Equatable, Sendable {
     case openApp(bundleID: String)
     case openURL(urlString: String)
     case keystroke(keyCode: UInt16, modifiers: [KeyModifier])
     case media(command: MediaCommand)
+    case pasteText(text: String)
+    case system(command: SystemCommand)
     case shellScript(script: String)
 }
 

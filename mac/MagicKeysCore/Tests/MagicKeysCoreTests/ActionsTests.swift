@@ -8,11 +8,19 @@ final class ActionsTests: XCTestCase {
             .openURL(urlString: "https://usemagic.io"),
             .keystroke(keyCode: 15, modifiers: [.command, .shift]),
             .media(command: .playPause),
+            .pasteText(text: "hello@usemagic.io"),
+            .system(command: .toggleMicMute),
             .shellScript(script: "echo hi"),
         ]
         let data = try JSONEncoder().encode(actions)
         let decoded = try JSONDecoder().decode([ActionConfig].self, from: data)
         XCTAssertEqual(decoded, actions)
+    }
+
+    func testEverySystemCommandRoundTrips() throws {
+        let actions = SystemCommand.allCases.map { ActionConfig.system(command: $0) }
+        let data = try JSONEncoder().encode(actions)
+        XCTAssertEqual(try JSONDecoder().decode([ActionConfig].self, from: data), actions)
     }
 
     func testDefaultConfigHasOneDefaultProfileWithEmptyBindings() {
