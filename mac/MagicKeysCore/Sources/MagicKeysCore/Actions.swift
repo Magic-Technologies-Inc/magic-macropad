@@ -19,6 +19,7 @@ public enum MediaCommand: String, Codable, CaseIterable, Sendable {
 /// user picks from a menu instead of writing a shell script. Ordered as shown in
 /// the picker.
 public enum SystemCommand: String, Codable, CaseIterable, Sendable {
+    case switchApp            // ⌘Tab — can't be recorded (the system eats it), so it's a named action
     case toggleMicMute        // mute/unmute the system audio input
     case lockScreen           // lock immediately (⌃⌘Q)
     case sleepDisplay         // turn the display off

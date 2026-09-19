@@ -66,6 +66,10 @@ final class ActionEngine {
 
     private func runSystem(_ command: SystemCommand) {
         switch command {
+        case .switchApp:
+            guard ensureAccessibility() else { return }
+            postAppSwitch()
+
         case .toggleMicMute:
             // Standard Additions volume commands — no Automation permission.
             runOSAScript([
@@ -150,6 +154,24 @@ final class ActionEngine {
         case .volumeDown: return .volumeDown
         case .mute: return .mute
         }
+    }
+
+    /// Synthesizes ⌘Tab as a real hold-⌘ / tap-Tab / release-⌘ sequence. A plain
+    /// keystroke won't do it: the app switcher only commits when the Command flag
+    /// drops, so Command must be pressed and released around the Tab tap.
+    private func postAppSwitch() {
+        let source = CGEventSource(stateID: .hidSystemState)
+        let command: CGKeyCode = 0x37  // left Command
+        let tab: CGKeyCode = 0x30
+        func post(_ key: CGKeyCode, down: Bool, flags: CGEventFlags) {
+            guard let event = CGEvent(keyboardEventSource: source, virtualKey: key, keyDown: down) else { return }
+            event.flags = flags
+            event.post(tap: .cghidEventTap)
+        }
+        post(command, down: true, flags: .maskCommand)
+        post(tab, down: true, flags: .maskCommand)
+        post(tab, down: false, flags: .maskCommand)
+        post(command, down: false, flags: [])
     }
 
     private func postKeystroke(keyCode: UInt16, modifiers: [KeyModifier]) {

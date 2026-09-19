@@ -38,6 +38,7 @@ extension MediaCommand {
 extension SystemCommand {
     var label: String {
         switch self {
+        case .switchApp: return "Switch App (⌘Tab)"
         case .toggleMicMute: return "Mute / Unmute Mic"
         case .lockScreen: return "Lock Screen"
         case .sleepDisplay: return "Sleep Display"
@@ -49,6 +50,7 @@ extension SystemCommand {
     }
     var icon: String {
         switch self {
+        case .switchApp: return "macwindow.on.rectangle"
         case .toggleMicMute: return "mic.slash.fill"
         case .lockScreen: return "lock.fill"
         case .sleepDisplay: return "display"
