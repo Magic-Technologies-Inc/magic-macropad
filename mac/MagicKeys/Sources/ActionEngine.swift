@@ -41,7 +41,7 @@ final class ActionEngine {
         case .system(let command):
             runSystem(command)
 
-        case .shellScript(let script):
+        case .shellScript(let script, _):
             runShell(script)
         }
     }

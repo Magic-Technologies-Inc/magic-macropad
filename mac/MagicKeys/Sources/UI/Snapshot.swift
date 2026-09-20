@@ -17,7 +17,7 @@ enum Snapshot {
             $0.profiles[0].keys[0].hold = .media(command: .playPause)
             let id = $0.addProfile(bundleID: "com.apple.Terminal", name: "Terminal", symbol: "terminal")
             if let i = $0.profileIndex(id: id) {
-                $0.profiles[i].keys[0].tap = .shellScript(script: "clear")  // Terminal-specific tap
+                $0.profiles[i].keys[0].tap = .shellScript(script: "clear", name: nil)  // Terminal-specific tap
             }
         }
         // Show the Terminal profile so the inherited "Default" tag is visible.
@@ -41,7 +41,7 @@ enum Snapshot {
         func renderPicker(to url: URL) {
             let view = ActionPickerSheet(
                 title: "Assign to tap",
-                current: .shellScript(script: ""),
+                current: .shellScript(script: "", name: nil),
                 onSet: { _ in }, onClose: {})
                 .frame(width: 442, height: 290)
                 .padding(16)

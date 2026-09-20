@@ -91,7 +91,8 @@ extension ActionConfig {
             return text.isEmpty ? "Paste Text" : text
         case .system(let command):
             return command.label
-        case .shellScript(let script):
+        case .shellScript(let script, let name):
+            if let name, !name.isEmpty { return name }
             return script.isEmpty ? "Shell Script" : script
         }
     }
@@ -145,7 +146,7 @@ enum ActionType: String, CaseIterable, Identifiable {
         case .openURL: return .openURL(urlString: "")
         case .keystroke: return .keystroke(keyCode: 0, modifiers: [])
         case .pasteText: return .pasteText(text: "")
-        case .shellScript: return .shellScript(script: "")
+        case .shellScript: return .shellScript(script: "", name: nil)
         }
     }
 }

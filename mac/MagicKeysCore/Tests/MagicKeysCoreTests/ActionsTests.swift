@@ -10,11 +10,19 @@ final class ActionsTests: XCTestCase {
             .media(command: .playPause),
             .pasteText(text: "hello@usemagic.io"),
             .system(command: .toggleMicMute),
-            .shellScript(script: "echo hi"),
+            .shellScript(script: "echo hi", name: "Say hi"),
+            .shellScript(script: "echo hi", name: nil),
         ]
         let data = try JSONEncoder().encode(actions)
         let decoded = try JSONDecoder().decode([ActionConfig].self, from: data)
         XCTAssertEqual(decoded, actions)
+    }
+
+    func testLegacyShellScriptWithoutNameDecodes() throws {
+        // Pre-naming wire format: shellScript had only `script`.
+        let legacy = #"[{"shellScript":{"script":"clear"}}]"#
+        let decoded = try JSONDecoder().decode([ActionConfig].self, from: Data(legacy.utf8))
+        XCTAssertEqual(decoded, [.shellScript(script: "clear", name: nil)])
     }
 
     func testEverySystemCommandRoundTrips() throws {
@@ -40,13 +48,13 @@ final class ActionsTests: XCTestCase {
     func testBindingLookupByGesture() {
         var config = K1Config.makeDefault()
         config.profiles[0].keys[1].doubleTap = .media(command: .mute)
-        config.profiles[0].keys[2].hold = .shellScript(script: "echo hold")
+        config.profiles[0].keys[2].hold = .shellScript(script: "echo hold", name: nil)
         let profile = config.defaultProfile
         XCTAssertEqual(profile.action(for: .doubleTap(key: 1)), .media(command: .mute))
         XCTAssertNil(profile.action(for: .tap(key: 1)))
         XCTAssertNil(profile.action(for: .doubleTap(key: 0)))
         XCTAssertNil(profile.action(for: .tap(key: 9)))  // out of range is nil, not a crash
-        XCTAssertEqual(profile.action(for: .hold(key: 2)), .shellScript(script: "echo hold"))
+        XCTAssertEqual(profile.action(for: .hold(key: 2)), .shellScript(script: "echo hold", name: nil))
         XCTAssertNil(profile.action(for: .hold(key: 0)))
     }
 
@@ -55,10 +63,10 @@ final class ActionsTests: XCTestCase {
         config.profiles[0].keys[0].tap = .media(command: .playPause)          // default
         let id = config.addProfile(bundleID: "com.apple.Terminal", name: "Terminal", symbol: "terminal")
         let i = config.profileIndex(id: id)!
-        config.profiles[i].keys[0].tap = .shellScript(script: "clear")         // Terminal-only
+        config.profiles[i].keys[0].tap = .shellScript(script: "clear", name: nil)         // Terminal-only
 
         XCTAssertEqual(config.action(for: .tap(key: 0), bundleID: "com.apple.Terminal"),
-                       .shellScript(script: "clear"))
+                       .shellScript(script: "clear", name: nil))
         XCTAssertEqual(config.action(for: .tap(key: 0), bundleID: "com.apple.Safari"),
                        .media(command: .playPause))  // no Safari profile -> default
         XCTAssertEqual(config.action(for: .tap(key: 0), bundleID: nil),
@@ -70,11 +78,11 @@ final class ActionsTests: XCTestCase {
         config.profiles[0].keys[1].hold = .media(command: .mute)               // default hold
         let id = config.addProfile(bundleID: "com.apple.Terminal", name: "Terminal", symbol: "terminal")
         let i = config.profileIndex(id: id)!
-        config.profiles[i].keys[1].tap = .shellScript(script: "clear")         // Terminal tap only
+        config.profiles[i].keys[1].tap = .shellScript(script: "clear", name: nil)         // Terminal tap only
 
         // Terminal defines tap but not hold -> hold inherits the default.
         XCTAssertEqual(config.action(for: .tap(key: 1), bundleID: "com.apple.Terminal"),
-                       .shellScript(script: "clear"))
+                       .shellScript(script: "clear", name: nil))
         XCTAssertEqual(config.action(for: .hold(key: 1), bundleID: "com.apple.Terminal"),
                        .media(command: .mute))
         // The default profile itself never "inherits" (returns nil when unbound).

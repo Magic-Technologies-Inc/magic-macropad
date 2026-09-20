@@ -179,6 +179,7 @@ private struct ParamForm: View {
     @State private var bundleID = ""
     @State private var urlString = ""
     @State private var script = ""
+    @State private var name = ""
     @State private var text = ""
     @State private var keyCode: UInt16 = 0
     @State private var modifiers: [KeyModifier] = []
@@ -198,6 +199,18 @@ private struct ParamForm: View {
     private var buttonRow: some View {
         HStack(spacing: 8) {
             if type == .shellScript {
+                Menu {
+                    ForEach(ScriptPresets.all) { preset in
+                        Button(preset.name) {
+                            script = preset.script
+                            if name.isEmpty { name = preset.name }
+                        }
+                    }
+                } label: {
+                    Label("Examples", systemImage: "sparkles")
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
                 Button { loadShellFile() } label: {
                     Label("Load .sh file…", systemImage: "doc.text")
                 }
@@ -240,23 +253,27 @@ private struct ParamForm: View {
                     }
                 }
         case .shellScript:
-            ScriptEditor(text: $script)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(MagicColor.surfacePageAlt)
-                        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(MagicColor.borderDefault, lineWidth: 1)))
-                .overlay(alignment: .topLeading) {
-                    if script.isEmpty {
-                        // ScriptEditor's text starts at inset (10, 10) — match it exactly.
-                        Text("Paste your script here, or load a .sh file…")
-                            .font(.system(size: 13, design: .monospaced))
-                            .foregroundStyle(MagicColor.textTertiary)
-                            .padding(.leading, 10)
-                            .padding(.top, 10)
-                            .allowsHitTesting(false)
+            VStack(alignment: .leading, spacing: 8) {
+                TextField("Name (optional) — e.g. Save & Push", text: $name)
+                    .textFieldStyle(.roundedBorder)
+                ScriptEditor(text: $script)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(MagicColor.surfacePageAlt)
+                            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(MagicColor.borderDefault, lineWidth: 1)))
+                    .overlay(alignment: .topLeading) {
+                        if script.isEmpty {
+                            // ScriptEditor's text starts at inset (10, 10) — match it exactly.
+                            Text("Paste your script here, or pick an example…")
+                                .font(.system(size: 13, design: .monospaced))
+                                .foregroundStyle(MagicColor.textTertiary)
+                                .padding(.leading, 10)
+                                .padding(.top, 10)
+                                .allowsHitTesting(false)
+                        }
                     }
-                }
+            }
         }
     }
 
@@ -324,7 +341,7 @@ private struct ParamForm: View {
         case .openURL(let u): urlString = u
         case .keystroke(let c, let m): keyCode = c; modifiers = m
         case .pasteText(let t): text = t
-        case .shellScript(let s): script = s
+        case .shellScript(let s, let n): script = s; name = n ?? ""
         case .media, .system: break
         }
     }
@@ -335,7 +352,7 @@ private struct ParamForm: View {
         case .openURL: return .openURL(urlString: urlString)
         case .keystroke: return .keystroke(keyCode: keyCode, modifiers: modifiers)
         case .pasteText: return .pasteText(text: text)
-        case .shellScript: return .shellScript(script: script)
+        case .shellScript: return .shellScript(script: script, name: name.isEmpty ? nil : name)
         }
     }
 

@@ -39,7 +39,7 @@ public enum ActionConfig: Codable, Equatable, Sendable {
     case media(command: MediaCommand)
     case pasteText(text: String)
     case system(command: SystemCommand)
-    case shellScript(script: String)
+    case shellScript(script: String, name: String?)
 }
 
 public struct KeyBinding: Codable, Equatable, Sendable {
