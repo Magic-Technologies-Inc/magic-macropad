@@ -41,8 +41,34 @@ final class ActionEngine {
         case .system(let command):
             runSystem(command)
 
+        case .ai(let command):
+            runAI(command)
+
         case .shellScript(let script, _):
             runShell(script)
+        }
+    }
+
+    // MARK: AI actions
+
+    private func runAI(_ command: AICommand) {
+        switch command {
+        case .newClaudeChat:
+            if let url = URL(string: "https://claude.ai/new") { NSWorkspace.shared.open(url) }
+
+        case .newChatGPTChat:
+            // Prefer the ChatGPT app if installed; fall back to the web.
+            if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.openai.chat") {
+                NSWorkspace.shared.openApplication(at: appURL, configuration: .init())
+            } else if let url = URL(string: "https://chatgpt.com") {
+                NSWorkspace.shared.open(url)
+            }
+
+        case .dictation:
+            // F5 is the Dictation key on modern Mac keyboards; posting it starts
+            // Dictation when that (default) shortcut is in effect.
+            guard ensureAccessibility() else { return }
+            postKeystroke(keyCode: 96, modifiers: [])  // kVK_F5
         }
     }
 

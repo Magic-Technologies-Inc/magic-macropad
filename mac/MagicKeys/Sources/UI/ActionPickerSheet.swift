@@ -35,7 +35,7 @@ struct ActionPickerSheet: View {
         case .keystroke: return .params(.keystroke, current!)
         case .pasteText: return .params(.pasteText, current!)
         case .shellScript: return .params(.shellScript, current!)
-        case .media, .system, .none: return .list  // ready-made → show the list
+        case .media, .system, .ai, .none: return .list  // ready-made → show the list
         }
     }
 
@@ -122,6 +122,11 @@ struct ActionPickerSheet: View {
                 ForEach(SystemCommand.allCases, id: \.self) { command in
                     row(icon: command.icon, name: command.label, hint: "") {
                         onSet(.system(command: command))
+                    }
+                }
+                ForEach(AICommand.allCases, id: \.self) { command in
+                    row(icon: command.icon, name: command.label, hint: "") {
+                        onSet(.ai(command: command))
                     }
                 }
             }
@@ -342,7 +347,7 @@ private struct ParamForm: View {
         case .keystroke(let c, let m): keyCode = c; modifiers = m
         case .pasteText(let t): text = t
         case .shellScript(let s, let n): script = s; name = n ?? ""
-        case .media, .system: break
+        case .media, .system, .ai: break
         }
     }
 

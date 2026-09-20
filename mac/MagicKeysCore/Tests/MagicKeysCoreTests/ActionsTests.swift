@@ -10,6 +10,7 @@ final class ActionsTests: XCTestCase {
             .media(command: .playPause),
             .pasteText(text: "hello@usemagic.io"),
             .system(command: .toggleMicMute),
+            .ai(command: .newClaudeChat),
             .shellScript(script: "echo hi", name: "Say hi"),
             .shellScript(script: "echo hi", name: nil),
         ]
@@ -29,6 +30,19 @@ final class ActionsTests: XCTestCase {
         let actions = SystemCommand.allCases.map { ActionConfig.system(command: $0) }
         let data = try JSONEncoder().encode(actions)
         XCTAssertEqual(try JSONDecoder().decode([ActionConfig].self, from: data), actions)
+    }
+
+    func testEveryAICommandRoundTrips() throws {
+        let actions = AICommand.allCases.map { ActionConfig.ai(command: $0) }
+        let data = try JSONEncoder().encode(actions)
+        XCTAssertEqual(try JSONDecoder().decode([ActionConfig].self, from: data), actions)
+    }
+
+    func testSeededConfigIsValidAndBound() {
+        let config = K1Config.makeSeeded()
+        XCTAssertTrue(config.isValid)
+        XCTAssertEqual(config.defaultProfile.keys[0].tap, .media(command: .playPause))
+        XCTAssertEqual(config.defaultProfile.keys[2].tap, .ai(command: .newClaudeChat))
     }
 
     func testDefaultConfigHasOneDefaultProfileWithEmptyBindings() {

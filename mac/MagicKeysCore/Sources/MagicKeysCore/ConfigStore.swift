@@ -20,7 +20,8 @@ public final class ConfigStore: ObservableObject {
            loaded.isValid {
             self.config = loaded
         } else {
-            self.config = K1Config.makeDefault()
+            // No valid config on disk → seed useful first-run bindings.
+            self.config = K1Config.makeSeeded()
         }
     }
 

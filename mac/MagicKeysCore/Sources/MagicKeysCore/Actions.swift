@@ -29,6 +29,13 @@ public enum SystemCommand: String, Codable, CaseIterable, Sendable {
     case toggleKeepAwake      // caffeinate on/off (prevent sleep)
 }
 
+/// AI-assistant actions — the differentiator for a keypad from an AI company.
+public enum AICommand: String, Codable, CaseIterable, Sendable {
+    case newClaudeChat        // open a fresh Claude conversation
+    case newChatGPTChat       // open a fresh ChatGPT conversation (app if installed)
+    case dictation            // start macOS Dictation (posts the F5 dictation key)
+}
+
 /// Persisted to disk as JSON via synthesized Codable: case names and associated-value
 /// labels ARE the wire format. Renaming any of them breaks existing config files —
 /// add explicit CodingKeys before renaming. New cases are additive and safe.
@@ -39,6 +46,7 @@ public enum ActionConfig: Codable, Equatable, Sendable {
     case media(command: MediaCommand)
     case pasteText(text: String)
     case system(command: SystemCommand)
+    case ai(command: AICommand)
     case shellScript(script: String, name: String?)
 }
 
@@ -137,6 +145,30 @@ public struct K1Config: Codable, Equatable, Sendable {
 
     public static func makeDefault() -> K1Config {
         K1Config(profiles: [.makeDefaultProfile()], timing: GestureTiming())
+    }
+
+    /// A first-run config so a brand-new install does something useful before
+    /// the user configures anything. Only applied when there's no config on
+    /// disk — it never overwrites an existing setup. Showcases each action
+    /// family across the three keys: media, system, and AI.
+    public static func makeSeeded() -> K1Config {
+        var profile = AppProfile.makeDefaultProfile()
+        if profile.keys.count == 3 {
+            profile.keys[0] = KeyBinding(
+                tap: .media(command: .playPause),
+                doubleTap: .media(command: .nextTrack),
+                tripleTap: .media(command: .previousTrack),
+                hold: .media(command: .mute))
+            profile.keys[1] = KeyBinding(
+                tap: .system(command: .missionControl),
+                doubleTap: .system(command: .screenshotRegion),
+                hold: .system(command: .lockScreen))
+            profile.keys[2] = KeyBinding(
+                tap: .ai(command: .newClaudeChat),
+                doubleTap: .ai(command: .newChatGPTChat),
+                hold: .ai(command: .dictation))
+        }
+        return K1Config(profiles: [profile], timing: GestureTiming())
     }
 
     /// The global fallback profile (always present as an invariant).

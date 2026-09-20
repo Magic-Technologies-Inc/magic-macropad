@@ -62,6 +62,23 @@ extension SystemCommand {
     }
 }
 
+extension AICommand {
+    var label: String {
+        switch self {
+        case .newClaudeChat: return "New Claude Chat"
+        case .newChatGPTChat: return "New ChatGPT Chat"
+        case .dictation: return "Dictation"
+        }
+    }
+    var icon: String {
+        switch self {
+        case .newClaudeChat: return "sparkle"
+        case .newChatGPTChat: return "bubble.left.and.text.bubble.right"
+        case .dictation: return "mic.fill"
+        }
+    }
+}
+
 extension ActionConfig {
     /// SF Symbol shown in the gesture row and picker.
     var icon: String {
@@ -72,6 +89,7 @@ extension ActionConfig {
         case .media(let command): return command.icon
         case .pasteText: return "doc.on.clipboard"
         case .system(let command): return command.icon
+        case .ai(let command): return command.icon
         case .shellScript: return "terminal"
         }
     }
@@ -91,6 +109,8 @@ extension ActionConfig {
             return text.isEmpty ? "Paste Text" : text
         case .system(let command):
             return command.label
+        case .ai(let command):
+            return command.label
         case .shellScript(let script, let name):
             if let name, !name.isEmpty { return name }
             return script.isEmpty ? "Shell Script" : script
@@ -102,7 +122,7 @@ extension ActionConfig {
         switch self {
         case .keystroke(let keyCode, let modifiers):
             return modifiers.map(\.symbol).joined() + KeyName.forCode(keyCode)
-        case .openApp, .openURL, .media, .pasteText, .system, .shellScript:
+        case .openApp, .openURL, .media, .pasteText, .system, .ai, .shellScript:
             return ""
         }
     }

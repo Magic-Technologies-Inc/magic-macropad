@@ -13,9 +13,12 @@ final class ConfigStoreTests: XCTestCase {
         try? FileManager.default.removeItem(at: dir)
     }
 
-    func testMissingFileYieldsDefaultConfig() {
+    func testMissingFileYieldsSeededConfig() {
         let store = ConfigStore(directory: dir)
-        XCTAssertEqual(store.config, K1Config.makeDefault())
+        XCTAssertEqual(store.config, K1Config.makeSeeded())
+        // Seed is a valid config with at least one binding.
+        XCTAssertTrue(store.config.isValid)
+        XCTAssertNotNil(store.config.defaultProfile.keys[0].tap)
     }
 
     func testUpdatePersistsAndReloads() {
@@ -39,7 +42,7 @@ final class ConfigStoreTests: XCTestCase {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         try Data("not json".utf8).write(to: dir.appendingPathComponent("config.json"))
         let store = ConfigStore(directory: dir)
-        XCTAssertEqual(store.config, K1Config.makeDefault())
+        XCTAssertEqual(store.config, K1Config.makeSeeded())
     }
 
     func testWrongKeyCountFallsBackToDefault() throws {
@@ -49,7 +52,7 @@ final class ConfigStoreTests: XCTestCase {
         let data = try JSONEncoder().encode(short)
         try data.write(to: dir.appendingPathComponent("config.json"))
         let store = ConfigStore(directory: dir)
-        XCTAssertEqual(store.config, K1Config.makeDefault())
+        XCTAssertEqual(store.config, K1Config.makeSeeded())
     }
 
     func testLegacyFileMigratesOnLoad() throws {
