@@ -32,6 +32,7 @@ struct ActionPickerSheet: View {
         switch current {
         case .openApp: return .params(.openApp, current!)
         case .openURL: return .params(.openURL, current!)
+        case .openPath: return .params(.openFile, current!)
         case .keystroke: return .params(.keystroke, current!)
         case .pasteText: return .params(.pasteText, current!)
         case .shellScript: return .params(.shellScript, current!)
@@ -183,6 +184,7 @@ private struct ParamForm: View {
 
     @State private var bundleID = ""
     @State private var urlString = ""
+    @State private var path = ""
     @State private var script = ""
     @State private var name = ""
     @State private var text = ""
@@ -223,7 +225,8 @@ private struct ParamForm: View {
                 .controlSize(.small)
             }
             Spacer()
-            if type != .openApp {  // Open App commits on selection — no Set button.
+            // Open App and Open File commit on selection — no Set button.
+            if type != .openApp && type != .openFile {
                 Button("Set") { onSet(build()) }
                     .buttonStyle(.borderedProminent)
                     .tint(MagicColor.cerulean)
@@ -238,6 +241,8 @@ private struct ParamForm: View {
             appPicker
         case .openURL:
             TextField("https://usemagic.io", text: $urlString).textFieldStyle(.roundedBorder)
+        case .openFile:
+            filePicker
         case .keystroke:
             KeyRecorderField(keyCode: $keyCode, modifiers: $modifiers)
         case .pasteText:
@@ -279,6 +284,37 @@ private struct ParamForm: View {
                         }
                     }
             }
+        }
+    }
+
+    /// Pick a file or folder; commits immediately on choosing (like the app picker).
+    private var filePicker: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "folder").foregroundStyle(MagicColor.textSecondary)
+            Text(path.isEmpty ? "Choose a file or folder…" : (path as NSString).lastPathComponent)
+                .foregroundStyle(path.isEmpty ? MagicColor.textSecondary : MagicColor.textPrimary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Spacer(minLength: 8)
+            Button("Choose…") { chooseFileOrFolder() }
+                .controlSize(.small)
+        }
+        .font(MagicFont.text(14))
+        .padding(.horizontal, 12)
+        .frame(height: 34)
+        .background(RoundedRectangle(cornerRadius: 8).fill(MagicColor.surfacePageAlt)
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(MagicColor.borderDefault, lineWidth: 1)))
+    }
+
+    private func chooseFileOrFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Choose"
+        if panel.runModal() == .OK, let url = panel.url {
+            path = url.path
+            onSet(.openPath(path: url.path))
         }
     }
 
@@ -344,6 +380,7 @@ private struct ParamForm: View {
         switch initial {
         case .openApp(let b): bundleID = b
         case .openURL(let u): urlString = u
+        case .openPath(let p): path = p
         case .keystroke(let c, let m): keyCode = c; modifiers = m
         case .pasteText(let t): text = t
         case .shellScript(let s, let n): script = s; name = n ?? ""
@@ -355,6 +392,7 @@ private struct ParamForm: View {
         switch type {
         case .openApp: return .openApp(bundleID: bundleID)
         case .openURL: return .openURL(urlString: urlString)
+        case .openFile: return .openPath(path: path)
         case .keystroke: return .keystroke(keyCode: keyCode, modifiers: modifiers)
         case .pasteText: return .pasteText(text: text)
         case .shellScript: return .shellScript(script: script, name: name.isEmpty ? nil : name)

@@ -85,6 +85,7 @@ extension ActionConfig {
         switch self {
         case .openApp: return "app.dashed"
         case .openURL: return "safari"
+        case .openPath: return "folder"
         case .keystroke: return "keyboard"
         case .media(let command): return command.icon
         case .pasteText: return "doc.on.clipboard"
@@ -101,6 +102,8 @@ extension ActionConfig {
             return bundleID.isEmpty ? "Open App" : (appName(forBundleID: bundleID) ?? "Open App")
         case .openURL(let urlString):
             return urlString.isEmpty ? "Open URL" : displayURL(urlString)
+        case .openPath(let path):
+            return path.isEmpty ? "Open File / Folder" : (path as NSString).lastPathComponent
         case .keystroke:
             return "Keystroke"
         case .media(let command):
@@ -122,7 +125,7 @@ extension ActionConfig {
         switch self {
         case .keystroke(let keyCode, let modifiers):
             return modifiers.map(\.symbol).joined() + KeyName.forCode(keyCode)
-        case .openApp, .openURL, .media, .pasteText, .system, .ai, .shellScript:
+        case .openApp, .openURL, .openPath, .media, .pasteText, .system, .ai, .shellScript:
             return ""
         }
     }
@@ -140,12 +143,13 @@ extension ActionConfig {
 
 /// The picker's action catalog: parameterised types plus ready-made media commands.
 enum ActionType: String, CaseIterable, Identifiable {
-    case openApp, openURL, keystroke, pasteText, shellScript
+    case openApp, openURL, openFile, keystroke, pasteText, shellScript
     var id: String { rawValue }
     var title: String {
         switch self {
         case .openApp: return "Open App…"
         case .openURL: return "Open URL…"
+        case .openFile: return "Open File / Folder…"
         case .keystroke: return "Keystroke…"
         case .pasteText: return "Paste Text…"
         case .shellScript: return "Shell Script…"
@@ -155,6 +159,7 @@ enum ActionType: String, CaseIterable, Identifiable {
         switch self {
         case .openApp: return "app.dashed"
         case .openURL: return "safari"
+        case .openFile: return "folder"
         case .keystroke: return "keyboard"
         case .pasteText: return "doc.on.clipboard"
         case .shellScript: return "terminal"
@@ -164,6 +169,7 @@ enum ActionType: String, CaseIterable, Identifiable {
         switch self {
         case .openApp: return .openApp(bundleID: "")
         case .openURL: return .openURL(urlString: "")
+        case .openFile: return .openPath(path: "")
         case .keystroke: return .keystroke(keyCode: 0, modifiers: [])
         case .pasteText: return .pasteText(text: "")
         case .shellScript: return .shellScript(script: "", name: nil)

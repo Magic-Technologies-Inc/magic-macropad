@@ -6,6 +6,7 @@ final class ActionsTests: XCTestCase {
         let actions: [ActionConfig] = [
             .openApp(bundleID: "com.apple.Music"),
             .openURL(urlString: "https://usemagic.io"),
+            .openPath(path: "/Users/me/Documents"),
             .keystroke(keyCode: 15, modifiers: [.command, .shift]),
             .media(command: .playPause),
             .pasteText(text: "hello@usemagic.io"),

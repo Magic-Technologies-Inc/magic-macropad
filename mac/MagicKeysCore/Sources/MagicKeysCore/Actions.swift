@@ -42,6 +42,7 @@ public enum AICommand: String, Codable, CaseIterable, Sendable {
 public enum ActionConfig: Codable, Equatable, Sendable {
     case openApp(bundleID: String)
     case openURL(urlString: String)
+    case openPath(path: String)
     case keystroke(keyCode: UInt16, modifiers: [KeyModifier])
     case media(command: MediaCommand)
     case pasteText(text: String)

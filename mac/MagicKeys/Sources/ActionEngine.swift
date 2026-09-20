@@ -23,6 +23,14 @@ final class ActionEngine {
             }
             NSWorkspace.shared.open(url)
 
+        case .openPath(let path):
+            let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                notifyFailure("No file or folder at \(path)")
+                return
+            }
+            NSWorkspace.shared.open(url)
+
         case .keystroke(let keyCode, let modifiers):
             guard ensureAccessibility() else { return }
             postKeystroke(keyCode: keyCode, modifiers: modifiers)
