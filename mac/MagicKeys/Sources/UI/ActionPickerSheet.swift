@@ -207,10 +207,14 @@ private struct ParamForm: View {
         HStack(spacing: 8) {
             if type == .shellScript {
                 Menu {
-                    ForEach(ScriptPresets.all) { preset in
-                        Button(preset.name) {
-                            script = preset.script
-                            if name.isEmpty { name = preset.name }
+                    ForEach(ScriptPresets.byCategory, id: \.category) { group in
+                        Menu(group.category) {
+                            ForEach(group.presets) { preset in
+                                Button(preset.name) {
+                                    script = preset.script
+                                    if name.isEmpty { name = preset.name }
+                                }
+                            }
                         }
                     }
                 } label: {
