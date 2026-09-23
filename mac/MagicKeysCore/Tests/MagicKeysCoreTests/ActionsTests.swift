@@ -44,6 +44,12 @@ final class ActionsTests: XCTestCase {
         XCTAssertTrue(config.isValid)
         XCTAssertEqual(config.defaultProfile.keys[0].tap, .media(command: .playPause))
         XCTAssertEqual(config.defaultProfile.keys[2].tap, .ai(command: .newClaudeChat))
+        // "Improve Writing" shell preset is seeded on the AI key's triple tap.
+        if case .shellScript(_, let name)? = config.defaultProfile.keys[2].tripleTap {
+            XCTAssertEqual(name, "Improve Writing")
+        } else {
+            XCTFail("expected a named shell script on key 3 triple tap")
+        }
     }
 
     func testDefaultConfigHasOneDefaultProfileWithEmptyBindings() {

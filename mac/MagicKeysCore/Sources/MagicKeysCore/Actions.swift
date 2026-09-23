@@ -167,6 +167,9 @@ public struct K1Config: Codable, Equatable, Sendable {
             profile.keys[2] = KeyBinding(
                 tap: .ai(command: .newClaudeChat),
                 doubleTap: .ai(command: .newChatGPTChat),
+                tripleTap: .shellScript(
+                    script: #"pbpaste | claude -p "Fix grammar and tighten this. Return only the revised text, no preamble." | pbcopy && osascript -e 'display notification "Rewritten — ⌘V to paste" with title "Claude"'"#,
+                    name: "Improve Writing"),
                 hold: .ai(command: .dictation))
         }
         return K1Config(profiles: [profile], timing: GestureTiming())
