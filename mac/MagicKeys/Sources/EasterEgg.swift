@@ -1,31 +1,20 @@
 import AVFoundation
 
-/// The hidden reward for mashing all three keys at once: a spoken one-liner.
-/// Uses the system speech synthesizer, so there's no audio asset to ship and
-/// nothing to license. Retained here because AVSpeechSynthesizer must outlive
-/// the utterance to actually speak.
+/// The hidden reward for mashing all three keys at once: a fart. The sound is a
+/// short bundled WAV (`fart.wav`), played via AVAudioPlayer. Retained here so it
+/// outlives the call and actually plays.
 @MainActor
 final class EasterEgg {
-    private let synthesizer = AVSpeechSynthesizer()
-
-    private let lines = [
-        "Whoa! All three at once. Show off.",
-        "You unlocked absolutely nothing. Congratulations.",
-        "Easter egg activated. Please deposit one coffee.",
-        "Achievement unlocked: aggressive mashing.",
-        "Three keys, zero chill.",
-        "Beep boop. That tickles.",
-        "Magic Keys senses great power in you. And greasy fingers.",
-        "That's a chord! Somebody call a band.",
-    ]
+    private let player: AVAudioPlayer? = {
+        guard let url = Bundle.main.url(forResource: "fart", withExtension: "wav") else { return nil }
+        let player = try? AVAudioPlayer(contentsOf: url)
+        player?.prepareToPlay()
+        return player
+    }()
 
     func fire() {
-        // Don't stack utterances if the key is mashed repeatedly.
-        if synthesizer.isSpeaking { return }
-        guard let line = lines.randomElement() else { return }
-        let utterance = AVSpeechUtterance(string: line)
-        utterance.rate = 0.5
-        utterance.pitchMultiplier = 1.1
-        synthesizer.speak(utterance)
+        guard let player else { return }
+        player.currentTime = 0   // restart if it's mashed again mid-play
+        player.play()
     }
 }
