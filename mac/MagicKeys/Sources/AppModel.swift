@@ -15,6 +15,7 @@ final class AppModel: ObservableObject {
     let configStore = ConfigStore()
     let frontApps = FrontAppMonitor()
     private let actionEngine = ActionEngine()
+    private let easterEgg = EasterEgg()
     private let hidService = HIDService()
     private var pipeline: GesturePipeline?
     private var observers: [AnyCancellable] = []
@@ -109,6 +110,7 @@ final class AppModel: ObservableObject {
 
     private func makePipeline() -> GesturePipeline {
         let pipeline = GesturePipeline(timing: configStore.config.timing)
+        pipeline.onChord = { [weak self] in self?.easterEgg.fire() }
         pipeline.onGesture = { [weak self] gesture in
             guard let self else { return }
             self.lastGesture = gesture
@@ -140,4 +142,22 @@ final class AppModel: ObservableObject {
             self?.pipeline?.handle(KeyEvent(key: key, isDown: false, seq: seq))
         }
     }
+
+    #if DEBUG
+    /// Presses all three keys together, then releases them — to test the
+    /// all-keys easter egg without hardware.
+    func simulateChord() {
+        for key in 0..<K1Protocol.keyCount {
+            virtualSeq &+= 1
+            pipeline?.handle(KeyEvent(key: key, isDown: true, seq: virtualSeq))
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            guard let self else { return }
+            for key in 0..<K1Protocol.keyCount {
+                self.virtualSeq &+= 1
+                self.pipeline?.handle(KeyEvent(key: key, isDown: false, seq: self.virtualSeq))
+            }
+        }
+    }
+    #endif
 }

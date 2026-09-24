@@ -234,6 +234,10 @@ struct MenuBarPanel: View {
                     Button("Hold") { model.simulatePress(key: key, duration: 0.6) }
                 }
             }
+            #if DEBUG
+            Divider()
+            Button("🥚 All three (easter egg)") { model.simulateChord() }
+            #endif
         } label: {
             Label("Test keys", systemImage: "wand.and.stars")
                 .font(MagicFont.text(12, weight: .semibold))

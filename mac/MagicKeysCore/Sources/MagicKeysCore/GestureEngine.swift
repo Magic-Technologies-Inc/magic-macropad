@@ -23,6 +23,13 @@ public final class GestureEngine {
         self.states = Array(repeating: .idle, count: keyCount)
     }
 
+    /// Clears all per-key state back to idle. Used when a higher layer (e.g. a
+    /// multi-key chord) takes over and the in-flight per-key gestures should be
+    /// dropped rather than firing on release.
+    public func reset() {
+        for i in states.indices { states[i] = .idle }
+    }
+
     private static func tapGesture(count: Int, key: Int) -> Gesture {
         switch count {
         case 1: return .tap(key: key)

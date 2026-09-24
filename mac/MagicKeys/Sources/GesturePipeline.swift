@@ -6,10 +6,16 @@ import MagicKeysCore
 @MainActor
 final class GesturePipeline {
     var onGesture: ((Gesture) -> Void)?
+    /// Fired once when all keys are held down together (the easter-egg chord).
+    var onChord: (() -> Void)?
 
     private let engine: GestureEngine
     private var timer: Timer?
     private var clock: () -> TimeInterval
+
+    // Raw down-key tracking for chord detection, independent of gesture logic.
+    private var downKeys = Set<Int>()
+    private var chordActive = false
 
     init(timing: GestureTiming, clock: @escaping () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
         self.engine = GestureEngine(timing: timing)
@@ -17,6 +23,24 @@ final class GesturePipeline {
     }
 
     func handle(_ event: KeyEvent) {
+        if event.isDown { downKeys.insert(event.key) } else { downKeys.remove(event.key) }
+
+        // All keys down at once → fire the chord, and swallow the per-key
+        // gestures for this whole press (drop pending ones so nothing fires on
+        // release) until every key is back up.
+        if downKeys.count == K1Protocol.keyCount && !chordActive {
+            chordActive = true
+            engine.reset()
+            onChord?()
+            reschedule()
+            return
+        }
+        if chordActive {
+            if downKeys.isEmpty { chordActive = false }
+            reschedule()
+            return
+        }
+
         emit(engine.handle(event, at: clock()))
         reschedule()
     }

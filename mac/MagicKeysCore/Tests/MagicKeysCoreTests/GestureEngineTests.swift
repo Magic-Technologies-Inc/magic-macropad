@@ -126,4 +126,16 @@ final class GestureEngineTests: XCTestCase {
         XCTAssertEqual(up(0, at: 0.0), [])
         XCTAssertNil(engine.nextDeadline)
     }
+
+    func testResetClearsPendingGestures() {
+        _ = down(0, at: 0.0)          // a hold would be pending
+        _ = down(1, at: 0.0)
+        engine.reset()
+        XCTAssertNil(engine.nextDeadline)               // nothing pending
+        XCTAssertEqual(engine.expire(at: 10.0), [])     // and nothing fires later
+        // Engine is usable again after reset.
+        _ = down(0, at: 11.0)
+        XCTAssertEqual(up(0, at: 11.05), [])
+        XCTAssertEqual(engine.expire(at: 11.7), [.tap(key: 0)])
+    }
 }
