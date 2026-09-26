@@ -10,7 +10,9 @@
 //   plate underside), lower housing ~5mm below plate, upper ~6.6mm above.
 // NOTE: clip or bend the switch pins short after soldering — the 7mm cavity
 // does not clear full-length 3.3mm pins.
-// Body/plug dimensions remain placeholders until the MacBook is measured.
+// Fit dims are tuned empirically against prints: v4 was confirmed on the Mac,
+// and v5 raises the USB corridor 2.5mm (chain_raise) to meet the port — check
+// the plug height against your Mac before a final print.
 //
 // Render one part at a time:
 //   openscad -D 'part="tray"'  -o k1_tray.stl  k1_v5.scad

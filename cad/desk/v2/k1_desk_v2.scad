@@ -17,9 +17,9 @@
 // slide seat_x0 until a cable clicks in fully.
 //
 // Render one part at a time:
-//   openscad -D 'part="tray"'  -o k1_desk_tray.stl  k1_desk_v2.scad
-//   openscad -D 'part="deck"'  -o k1_desk_deck.stl  k1_desk_v2.scad  (already flipped for printing)
-//   openscad -D 'part="plate"' -o k1_desk_plate.stl k1_desk_v2.scad
+//   openscad -D 'part="tray"'  -o k1_tray.stl  k1_desk_v2.scad
+//   openscad -D 'part="deck"'  -o k1_deck.stl  k1_desk_v2.scad  (already flipped for printing)
+//   openscad -D 'part="plate"' -o k1_plate.stl k1_desk_v2.scad
 //   part="assembly" / part="exploded" for viewing (includes mock switches/caps)
 
 part = "exploded"; // tray | lid | assembly | exploded
