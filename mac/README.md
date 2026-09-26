@@ -5,7 +5,8 @@ vendor HID, detects tap, double-tap, triple-tap, and hold, and runs the
 configured actions using per-app profiles.
 
 The Xcode target and Swift package keep the older names (`MagicKeys`,
-`MagicKeysCore`), but the built app is **Magic Macropad.app**.
+`MagicKeysCore`), but the built app is **Magic Macropad.app**. To install it
+for everyday use, see step 5 of the [build guide](../docs/build-guide.md).
 
 ## Structure
 

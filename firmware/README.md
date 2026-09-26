@@ -9,6 +9,10 @@ page 0xFF60. There's no gesture logic on the device. The protocol is in
 PID `0x0001` is the pid.codes shared *test* PID, a placeholder until the
 project has its own.
 
+Building a whole pad? Start with the [build guide](../docs/build-guide.md),
+which also covers installing the toolchain. Prebuilt `.uf2` files are attached
+to the GitHub releases.
+
 ## Build
 
     export PICO_SDK_PATH=~/pico-sdk        # Pico SDK 2.x with the tinyusb submodule

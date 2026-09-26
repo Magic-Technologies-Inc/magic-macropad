@@ -48,64 +48,27 @@ running actions. The full design is in
 
 ## Build one
 
-### Parts
+You'll need an RP2040-Zero, three MX-style switches and keycaps, some thin
+wire, a 3D printer, and a soldering iron. The side-mount version also needs a
+90° USB-C adapter and a USB-C coupler; the desk version uses a normal cable.
 
-| Part | Notes |
-|---|---|
-| RP2040-Zero | Waveshare's board or a pin-compatible clone |
-| 3 × MX-style switches | Plate-mount, through-hole. Clip the pins short after soldering; the cavity is 7 mm deep. |
-| 3 × MX keycaps | 18 mm wide. 3D-printed or off-the-shelf. |
-| Right-angle USB-C adapter + USB-C coupler | Side-mount build only. Together they bridge the board to the MacBook's port; the enclosure is sized for a ~44 mm chain. |
-| USB-C cable | Desk build only |
-| Hookup wire | Each switch connects to a GPIO pin and GND |
+**[The build guide](docs/build-guide.md)** walks through it step by step:
 
-### 1. Print the enclosure
+1. Choose a variant: side-mount or desk
+2. Gather parts and tools
+3. Print the enclosure
+4. Flash the firmware
+5. Install the app
+6. Wire and test the switches, with a wiring diagram and a self-test
+7. Assemble
+8. Troubleshooting
+9. Changing the enclosure, for other USB parts or printers
 
-There are two variants. Each is a tray plus a drop-in lid, which is split into
-a deck and a key plate.
-
-- **Side-mount**, in [`cad/v5/`](cad/v5/): hangs off the MacBook's side USB-C
-  port. The `*_mirror.stl` files fit the other side.
-- **Desk**, in [`cad/desk/v2/`](cad/desk/v2/): sits on the desk and takes a
-  normal USB-C cable at the back.
-
-The OpenSCAD sources are parametric, and each lists its export commands at the
-top. Some revisions include Bambu Studio projects (`.3mf`, sliced for an A1 at
-0.20 mm). Older revisions are kept for reference.
-
-### 2. Wire it
-
-Wire each switch between a GPIO pin and GND. The firmware uses internal
-pull-ups, so there's nothing else to add. Key 1 goes to GPIO 12, key 2 to
-GPIO 11, and key 3 to GPIO 10.
-
-### 3. Flash the firmware
-
-You need the [Pico SDK](https://github.com/raspberrypi/pico-sdk) 2.x and the
-Arm GNU toolchain. [firmware/README.md](firmware/README.md) has the details.
-
-    cd firmware
-    export PICO_SDK_PATH=~/pico-sdk
-    cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release && ninja -C build
-
-Hold **BOOT** while plugging the board in, then copy `build/k1_firmware.uf2`
-onto the `RPI-RP2` drive.
-
-### 4. Install the app
-
-You need macOS 15 or later and Xcode 26; the app icon is an Icon Composer
-file.
-
-    brew install xcodegen
-    cd mac && xcodegen generate
-    open MagicKeys.xcodeproj    # then Run
-
-**Magic Macropad** lives in the menu bar. Grant Accessibility when it asks;
-that's how it sends keystrokes. No board yet? The **Test keys** menu fires
-virtual presses.
-
-Some shell presets need other command-line tools, such as the Claude CLI
-(`claude`) or GitHub CLI (`gh`). Each preset notes what it needs.
+Prebuilt firmware is on the
+[Releases page](https://github.com/Magic-Technologies-Inc/magic-macropad/releases),
+so you only need the firmware toolchain if you change the firmware. No board
+yet? You can still install the app (step 5). Its **Test keys** menu simulates
+presses.
 
 ## Repository layout
 
@@ -114,6 +77,7 @@ Some shell presets need other command-line tools, such as the Claude CLI
 - `firmware/`: Pico SDK and TinyUSB firmware for the RP2040-Zero
 - `mac/`: the menu-bar app (SwiftUI). `MagicKeysCore/` holds the unit-tested
   core. The target and package still use the older "Magic Keys" name.
+- `docs/build-guide.md`: the step-by-step build guide
 - `docs/superpowers/`: design specs and implementation plans. They predate the
   Magic Macropad name, so they still say "K1" and "Magic Keys".
 
