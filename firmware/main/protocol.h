@@ -1,4 +1,4 @@
-// protocol.h — K1 <-> Magic Keys wire protocol. 8-byte HID reports.
+// protocol.h — K1 <-> Magic Macropad app wire protocol. 8-byte HID reports.
 // This file is the single source of truth; the Mac app's Protocol.swift mirrors it.
 #pragma once
 #include <stdint.h>

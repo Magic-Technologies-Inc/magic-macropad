@@ -44,10 +44,10 @@ static const tusb_desc_device_t k1_device_descriptor = {
 };
 
 static const char *k1_string_descriptor[] = {
-    NULL,           // 0: language, handled specially in the callback
-    "Magic",        // 1: manufacturer
-    "K1",           // 2: product
-    "K1-DEV-0001",  // 3: serial
+    NULL,             // 0: language, handled specially in the callback
+    "Magic",          // 1: manufacturer
+    "Magic Macropad", // 2: product
+    "K1-DEV-0001",    // 3: serial
 };
 
 enum { ITF_NUM_HID = 0, ITF_NUM_TOTAL };

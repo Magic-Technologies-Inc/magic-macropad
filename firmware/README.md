@@ -1,23 +1,29 @@
-# K1 Firmware
+# Magic Macropad firmware
 
-Pico SDK firmware for the RP2040-Zero (Waveshare design). Enumerates as a
-vendor HID device (VID 0x1209, PID 0x0001, usage page 0xFF60) and reports
-debounced key down/up events. Protocol: `main/protocol.h`. No gesture logic
-on-device.
+Pico SDK firmware for the RP2040-Zero (Waveshare design), codename K1. It
+enumerates as a vendor HID device and reports debounced key down/up events:
+manufacturer "Magic", product "Magic Macropad", VID 0x1209, PID 0x0001, usage
+page 0xFF60. There's no gesture logic on the device. The protocol is in
+`main/protocol.h`.
+
+PID `0x0001` is the pid.codes shared *test* PID, a placeholder until the
+project has its own.
 
 ## Build
 
-    export PICO_SDK_PATH=~/pico-sdk
-    export PICO_TOOLCHAIN_PATH=~/toolchains/arm-gnu-toolchain-14.2.rel1-darwin-arm64-arm-none-eabi
+    export PICO_SDK_PATH=~/pico-sdk        # Pico SDK 2.x with the tinyusb submodule
+    export PICO_TOOLCHAIN_PATH=/path/to/arm-gnu-toolchain   # Arm GNU Toolchain 14.x (arm-none-eabi)
     cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
     ninja -C build
 
-Produces `build/k1_firmware.uf2`.
+Produces `build/k1_firmware.uf2`. On macOS, use Arm's official toolchain
+download. Homebrew's `arm-none-eabi-gcc` formula ships without newlib and
+fails on `nosys.specs`.
 
 ## Flash
 
 Hold BOOT while plugging the board in, then drag the UF2 onto the mounted
-`RPI-RP2` volume — or `picotool load -f build/k1_firmware.uf2`.
+`RPI-RP2` volume, or run `picotool load -f build/k1_firmware.uf2`.
 
 ## Tests
 
@@ -25,9 +31,10 @@ Hold BOOT while plugging the board in, then drag the UF2 onto the mounted
   `cc -I main tests/host/test_debounce.c main/debounce.c -o /tmp/test_debounce && /tmp/test_debounce`
 - Hardware-in-loop: `tools/smoke_test.py` (see its docstring)
 
-Key GPIOs are defined in `main/keys.c` (`K1_KEY_GPIOS`) — GPIO 10/11/12,
-active-low (key to GND), internal pull-ups. Debug logs: UART0 on GPIO 0/1 at
-115200 (optional to wire).
+Key GPIOs are defined in `main/keys.c` (`K1_KEY_GPIOS`): GPIO 12, 11, and 10
+for keys 0, 1, and 2 (the app's Key 1–3). They're active-low (key to GND) with
+internal pull-ups. Debug logs go out UART0 on GPIO 0/1 at 115200; wiring it is
+optional.
 
 The onboard WS2812 (GPIO 16) shows a dim per-key color while a key is held
-(red/green/blue for keys 0/1/2) — `main/led.c`.
+(red/green/blue for keys 0/1/2); see `main/led.c`.
