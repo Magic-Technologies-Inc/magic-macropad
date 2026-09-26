@@ -1,7 +1,8 @@
 import AppKit
 
 /// Posts media keys as system-defined NSEvents (the same mechanism the
-/// keyboard's media keys use). No special permission required.
+/// keyboard's media keys use). Like synthesized keystrokes, they're only
+/// delivered while the app is trusted for Accessibility.
 enum MediaKey: UInt32 {
     case playPause = 16     // NX_KEYTYPE_PLAY
     case nextTrack = 17     // NX_KEYTYPE_NEXT

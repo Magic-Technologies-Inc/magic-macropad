@@ -60,6 +60,9 @@ struct MenuBarPanel: View {
         .onAppear {
             DispatchQueue.main.async { NSApp.activate(ignoringOtherApps: true) }
         }
+        // A picker's draft belongs to the profile it was opened for; close it
+        // whenever the edited profile changes (chip picked or profile added).
+        .onChange(of: model.editingProfileID) { picking = nil }
         .animation(.easeOut(duration: 0.18), value: picking)
     }
 
@@ -98,7 +101,7 @@ struct MenuBarPanel: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(accessibilityTrusted ? MagicColor.stateSuccess : MagicColor.accentBlue)
-        .help("Request Accessibility & Notification permissions (clears any stale grant from a previous build)")
+        .help("Request Accessibility & Notification permissions. When Accessibility isn't trusted, this also clears a stale grant left by a previous build.")
         .onAppear { accessibilityTrusted = Permissions.isAccessibilityTrusted }
     }
 

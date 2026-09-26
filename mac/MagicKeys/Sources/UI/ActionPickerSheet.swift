@@ -14,7 +14,7 @@ struct ActionPickerSheet: View {
 
     private enum Stage: Equatable {
         case list
-        case params(ActionType, ActionConfig)
+        case params(ActionType, ActionConfig?)  // nil draft: a new action, nothing to prefill
     }
     @State private var stage: Stage
 
@@ -30,12 +30,12 @@ struct ActionPickerSheet: View {
 
     private static func initialStage(for current: ActionConfig?) -> Stage {
         switch current {
-        case .openApp: return .params(.openApp, current!)
-        case .openURL: return .params(.openURL, current!)
-        case .openPath: return .params(.openFile, current!)
-        case .keystroke: return .params(.keystroke, current!)
-        case .pasteText: return .params(.pasteText, current!)
-        case .shellScript: return .params(.shellScript, current!)
+        case .openApp: return .params(.openApp, current)
+        case .openURL: return .params(.openURL, current)
+        case .openPath: return .params(.openFile, current)
+        case .keystroke: return .params(.keystroke, current)
+        case .pasteText: return .params(.pasteText, current)
+        case .shellScript: return .params(.shellScript, current)
         case .media, .system, .ai, .none: return .list  // ready-made → show the list
         }
     }
@@ -112,7 +112,7 @@ struct ActionPickerSheet: View {
                 }
                 ForEach(ActionType.allCases) { type in
                     row(icon: type.icon, name: type.title, hint: "") {
-                        stage = .params(type, type.makeEmpty())
+                        stage = .params(type, nil)
                     }
                 }
                 ForEach(MediaCommand.allCases, id: \.self) { command in
@@ -161,7 +161,7 @@ struct ActionPickerSheet: View {
 
     // MARK: Param form
 
-    private func paramForm(_ type: ActionType, _ draft: ActionConfig) -> some View {
+    private func paramForm(_ type: ActionType, _ draft: ActionConfig?) -> some View {
         ParamForm(type: type, initial: draft, onSet: { onSet($0) })
     }
 }
@@ -179,7 +179,7 @@ private struct HoverHighlight: View {
 /// Parameter entry for a parameterised action type, with a Set button.
 private struct ParamForm: View {
     let type: ActionType
-    let initial: ActionConfig
+    let initial: ActionConfig?
     let onSet: (ActionConfig) -> Void
 
     @State private var bundleID = ""
@@ -188,7 +188,7 @@ private struct ParamForm: View {
     @State private var script = ""
     @State private var name = ""
     @State private var text = ""
-    @State private var keyCode: UInt16 = 0
+    @State private var keyCode: UInt16?
     @State private var modifiers: [KeyModifier] = []
 
     var body: some View {
@@ -212,7 +212,7 @@ private struct ParamForm: View {
                             ForEach(group.presets) { preset in
                                 Button(preset.name) {
                                     script = preset.script
-                                    if name.isEmpty { name = preset.name }
+                                    name = ScriptPresets.name(afterPicking: preset, currentName: name)
                                 }
                             }
                         }
@@ -231,9 +231,10 @@ private struct ParamForm: View {
             Spacer()
             // Open App and Open File commit on selection — no Set button.
             if type != .openApp && type != .openFile {
-                Button("Set") { onSet(build()) }
+                Button("Set") { if let action = build() { onSet(action) } }
                     .buttonStyle(.borderedProminent)
                     .tint(MagicColor.cerulean)
+                    .disabled(build() == nil)
             }
         }
     }
@@ -388,16 +389,17 @@ private struct ParamForm: View {
         case .keystroke(let c, let m): keyCode = c; modifiers = m
         case .pasteText(let t): text = t
         case .shellScript(let s, let n): script = s; name = n ?? ""
-        case .media, .system, .ai: break
+        case .media, .system, .ai, .none: break
         }
     }
 
-    private func build() -> ActionConfig {
+    /// The configured action, or nil while it's incomplete (no key recorded yet).
+    private func build() -> ActionConfig? {
         switch type {
         case .openApp: return .openApp(bundleID: bundleID)
         case .openURL: return .openURL(urlString: urlString)
         case .openFile: return .openPath(path: path)
-        case .keystroke: return .keystroke(keyCode: keyCode, modifiers: modifiers)
+        case .keystroke: return keyCode.map { .keystroke(keyCode: $0, modifiers: modifiers) }
         case .pasteText: return .pasteText(text: text)
         case .shellScript: return .shellScript(script: script, name: name.isEmpty ? nil : name)
         }

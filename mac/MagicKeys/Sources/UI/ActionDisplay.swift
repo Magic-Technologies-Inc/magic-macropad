@@ -165,16 +165,6 @@ enum ActionType: String, CaseIterable, Identifiable {
         case .shellScript: return "terminal"
         }
     }
-    func makeEmpty() -> ActionConfig {
-        switch self {
-        case .openApp: return .openApp(bundleID: "")
-        case .openURL: return .openURL(urlString: "")
-        case .openFile: return .openPath(path: "")
-        case .keystroke: return .keystroke(keyCode: 0, modifiers: [])
-        case .pasteText: return .pasteText(text: "")
-        case .shellScript: return .shellScript(script: "", name: nil)
-        }
-    }
 }
 
 /// Minimal key-code → name map for displaying keystroke hints.

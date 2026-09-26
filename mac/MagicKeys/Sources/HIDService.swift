@@ -2,14 +2,16 @@ import Foundation
 import IOKit.hid
 import MagicKeysCore
 
-/// Owns the IOHIDManager session for the K1: hotplug, input reports, GET_INFO.
-/// All callbacks are delivered on the main run loop.
+/// Owns the IOHIDManager session for the pad: hotplug, input reports, GET_INFO.
+/// Callbacks are delivered on the main run loop in all common modes, so input
+/// keeps flowing while a menu or modal panel is open.
 final class HIDService {
     var onMessage: ((K1Message) -> Void)?
     var onConnectionChange: ((Bool) -> Void)?
 
     private var manager: IOHIDManager?
-    private var device: IOHIDDevice?
+    // Matching pads that are plugged in; only the active one is listened to.
+    private var devices = DeviceRoster<IOHIDDevice>()
     // Must outlive the registered callback, so it's a stable allocation,
     // not a Swift Array (whose withUnsafe... pointer may not escape).
     private let reportBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: K1Protocol.reportSize)
@@ -21,9 +23,13 @@ final class HIDService {
         let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
         self.manager = manager
 
+        // Usage page/usage as well as VID/PID: 1209:0001 is pid.codes' shared
+        // test ID, so other hobby boards can wear it too.
         let matching: [String: Any] = [
             kIOHIDVendorIDKey: K1Protocol.vendorID,
             kIOHIDProductIDKey: K1Protocol.productID,
+            kIOHIDDeviceUsagePageKey: K1Protocol.usagePage,
+            kIOHIDDeviceUsageKey: K1Protocol.usage,
         ]
         IOHIDManagerSetDeviceMatching(manager, matching as CFDictionary)
 
@@ -32,19 +38,34 @@ final class HIDService {
             let service = Unmanaged<HIDService>.fromOpaque(context!).takeUnretainedValue()
             service.deviceAttached(device)
         }, context)
-        IOHIDManagerRegisterDeviceRemovalCallback(manager, { context, _, _, _ in
+        IOHIDManagerRegisterDeviceRemovalCallback(manager, { context, _, _, device in
             let service = Unmanaged<HIDService>.fromOpaque(context!).takeUnretainedValue()
-            service.deviceDetached()
+            service.deviceRemoved(device)
         }, context)
 
-        IOHIDManagerScheduleWithRunLoop(manager, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
+        IOHIDManagerScheduleWithRunLoop(manager, CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue)
         IOHIDManagerOpen(manager, IOOptionBits(kIOHIDOptionsTypeNone))
     }
 
     private func deviceAttached(_ device: IOHIDDevice) {
-        self.device = device
-        lastSeq = nil
+        if devices.attach(device) { listen(to: device) }
+    }
 
+    private func deviceRemoved(_ device: IOHIDDevice) {
+        switch devices.remove(device) {
+        case .activeGone:
+            onConnectionChange?(false)
+        case .activeReplaced(let next):
+            onConnectionChange?(false)  // drops in-flight gestures from the pad that left
+            listen(to: next)
+        case .standby, nil:
+            break
+        }
+    }
+
+    /// Takes input reports from `device`, the one pad being listened to.
+    private func listen(to device: IOHIDDevice) {
+        lastSeq = nil
         let context = Unmanaged.passUnretained(self).toOpaque()
         IOHIDDeviceRegisterInputReportCallback(
             device, reportBuffer, K1Protocol.reportSize,
@@ -56,11 +77,6 @@ final class HIDService {
 
         onConnectionChange?(true)
         sendGetInfo()
-    }
-
-    private func deviceDetached() {
-        device = nil
-        onConnectionChange?(false)
     }
 
     private func handleReport(_ bytes: [UInt8]) {
@@ -78,7 +94,7 @@ final class HIDService {
     }
 
     func sendGetInfo() {
-        guard let device else { return }
+        guard let device = devices.active else { return }
         var report = K1Protocol.getInfoReport
         IOHIDDeviceSetReport(device, kIOHIDReportTypeOutput, 0, &report, report.count)
     }

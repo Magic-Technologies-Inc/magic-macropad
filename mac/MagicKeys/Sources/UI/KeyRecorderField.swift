@@ -10,11 +10,10 @@ import MagicKeysCore
 /// before the keyDown reaches the app. We detect that case (the app resigns
 /// active while a modifier is held) and point the user at the System Action.
 struct KeyRecorderField: View {
-    @Binding var keyCode: UInt16
+    @Binding var keyCode: UInt16?  // nil until a key is recorded
     @Binding var modifiers: [KeyModifier]
 
     @State private var recording = false
-    @State private var didRecord = false
     @State private var warning: String?
     @State private var monitor: Any?
     @State private var flagsMonitor: Any?
@@ -28,10 +27,10 @@ struct KeyRecorderField: View {
         var modifiersHeld = false   // a modifier is currently down
     }
 
-    private var hasValue: Bool { didRecord || !modifiers.isEmpty || keyCode != 0 }
+    private var hasValue: Bool { keyCode != nil }
 
     private var shortcutText: String {
-        modifiers.map(\.symbol).joined() + KeyName.forCode(keyCode)
+        modifiers.map(\.symbol).joined() + (keyCode.map(KeyName.forCode) ?? "")
     }
 
     var body: some View {
@@ -47,7 +46,7 @@ struct KeyRecorderField: View {
                     Spacer(minLength: 8)
                     if hasValue && !recording {
                         Button {
-                            keyCode = 0; modifiers = []; didRecord = false
+                            keyCode = nil; modifiers = []
                         } label: {
                             Image(systemName: "xmark.circle.fill").foregroundStyle(MagicColor.textTertiary)
                         }
@@ -109,7 +108,6 @@ struct KeyRecorderField: View {
             }
             keyCode = event.keyCode
             modifiers = Self.map(mods)
-            didRecord = true
             warning = nil
             stop()
             return nil  // swallow so it doesn't hit the app

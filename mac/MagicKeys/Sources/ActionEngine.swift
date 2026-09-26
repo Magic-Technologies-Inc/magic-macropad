@@ -17,11 +17,11 @@ final class ActionEngine {
             NSWorkspace.shared.openApplication(at: url, configuration: .init())
 
         case .openURL(let urlString):
-            guard let url = URL(string: urlString) else {
+            guard let url = URLInput.openable(urlString) else {
                 notifyFailure("Invalid URL: \(urlString)")
                 return
             }
-            NSWorkspace.shared.open(url)
+            if !NSWorkspace.shared.open(url) { notifyFailure("Couldn't open \(urlString)") }
 
         case .openPath(let path):
             let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
@@ -29,11 +29,11 @@ final class ActionEngine {
                 notifyFailure("No file or folder at \(path)")
                 return
             }
-            NSWorkspace.shared.open(url)
+            if !NSWorkspace.shared.open(url) { notifyFailure("Couldn't open \(path)") }
 
         case .keystroke(let keyCode, let modifiers):
             guard ensureAccessibility() else { return }
-            postKeystroke(keyCode: keyCode, modifiers: modifiers)
+            whenFrontAppIsActive { [weak self] in self?.postKeystroke(keyCode: keyCode, modifiers: modifiers) }
 
         case .media(let command):
             // Synthesized media-key events are only injected if the app is
@@ -53,7 +53,8 @@ final class ActionEngine {
             runAI(command)
 
         case .shellScript(let script, _):
-            runShell(script)
+            // Login shell for the user's PATH, plus the usual CLI tool folders.
+            launch("/bin/zsh", ["-lc", script], name: "Script", environment: Self.shellEnvironment)
         }
     }
 
@@ -86,19 +87,23 @@ final class ActionEngine {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
-        // Let the pasteboard settle before the keystroke, or the front app can
-        // paste stale contents.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-            self?.postKeystroke(keyCode: 9, modifiers: [.command])  // V
+        whenFrontAppIsActive { [weak self] in
+            // Let the pasteboard settle before the keystroke, or the front app can
+            // paste stale contents.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                self?.postKeystroke(keyCode: 9, modifiers: [.command])  // V
+            }
         }
     }
 
     // MARK: System actions
 
-    /// A caffeinate process kept alive while "keep awake" is toggled on.
-    private var keepAwakeProcess: Process?
+    /// Held while "keep awake" is on. The system drops it when the app exits, so
+    /// quitting or crashing can never leave the Mac unable to sleep.
+    private var keepAwakeActivity: NSObjectProtocol?
 
     private func runSystem(_ command: SystemCommand) {
+        let name = command.label
         switch command {
         case .switchApp:
             guard ensureAccessibility() else { return }
@@ -112,19 +117,22 @@ final class ActionEngine {
                 "else",
                 "set volume input volume 100",
                 "end if",
-            ])
+            ], name: name)
         case .lockScreen:
             guard ensureAccessibility() else { return }
             postKeystroke(keyCode: 12, modifiers: [.command, .control])  // ⌃⌘Q = Q
 
         case .sleepDisplay:
-            runProcess("/usr/bin/pmset", ["displaysleepnow"])
+            launch("/usr/bin/pmset", ["displaysleepnow"], name: name)
 
         case .toggleDarkMode:
-            runOSAScript(["tell application \"System Events\" to tell appearance preferences to set dark mode to not dark mode"])
+            runOSAScript(["tell application \"System Events\" to tell appearance preferences to set dark mode to not dark mode"],
+                         name: name)
 
         case .screenshotRegion:
-            runProcess("/usr/sbin/screencapture", ["-ic"])  // interactive region → clipboard
+            // Interactive region → clipboard. Esc cancels with a non-zero exit,
+            // which isn't a failure worth reporting.
+            launch("/usr/sbin/screencapture", ["-ic"], name: name, checkStatus: false)
 
         case .missionControl:
             NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Mission Control.app"))
@@ -135,39 +143,61 @@ final class ActionEngine {
     }
 
     private func toggleKeepAwake() {
-        if let process = keepAwakeProcess, process.isRunning {
-            process.terminate()
-            keepAwakeProcess = nil
+        if let activity = keepAwakeActivity {
+            ProcessInfo.processInfo.endActivity(activity)
+            keepAwakeActivity = nil
             notifyInfo("Sleep allowed — Magic Macropad is no longer keeping this Mac awake.")
         } else {
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/caffeinate")
-            process.arguments = ["-dimsu"]  // display, idle, disk, system; keep awake
-            do {
-                try process.run()
-                keepAwakeProcess = process
-                notifyInfo("Keeping this Mac awake — tap again to allow sleep.")
-            } catch {
-                notifyFailure("Couldn't start caffeinate: \(error.localizedDescription)")
-            }
+            keepAwakeActivity = ProcessInfo.processInfo.beginActivity(
+                options: [.idleDisplaySleepDisabled, .idleSystemSleepDisabled],
+                reason: "Keep Awake action")
+            notifyInfo("Keeping this Mac awake — tap again to allow sleep.")
         }
     }
 
-    private func runOSAScript(_ lines: [String]) {
+    private func runOSAScript(_ lines: [String], name: String) {
         var args: [String] = []
         for line in lines { args.append("-e"); args.append(line) }
-        runProcess("/usr/bin/osascript", args)
+        launch("/usr/bin/osascript", args, name: name)
     }
 
-    private func runProcess(_ path: String, _ arguments: [String]) {
+    /// Runs a tool without blocking. A launch error — or, with `checkStatus`, a
+    /// non-zero exit — becomes a failure notification naming the action.
+    private func launch(_ path: String, _ arguments: [String], name: String,
+                        environment: [String: String]? = nil, checkStatus: Bool = true) {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: path)
         process.arguments = arguments
+        if let environment { process.environment = environment }
+        if checkStatus {
+            process.terminationHandler = { [weak self] process in
+                let status = process.terminationStatus
+                guard status != 0 else { return }
+                Task { @MainActor in self?.notifyFailure(Self.exitMessage(name, status: status)) }
+            }
+        }
         do {
             try process.run()
         } catch {
-            notifyFailure("Couldn't run \((path as NSString).lastPathComponent): \(error.localizedDescription)")
+            notifyFailure("Couldn't run \(name): \(error.localizedDescription)")
         }
+    }
+
+    private static func exitMessage(_ name: String, status: Int32) -> String {
+        status == 127
+            ? "\(name) failed: a command it uses isn't installed or isn't on the PATH."
+            : "\(name) failed (exit status \(status))."
+    }
+
+    /// GUI apps start with a minimal PATH, and a login shell only adds what
+    /// /etc/paths and ~/.zprofile provide — so also search where CLI tools like
+    /// claude, gh and cursor usually live.
+    private static var shellEnvironment: [String: String] {
+        var environment = ProcessInfo.processInfo.environment
+        let extra = ["\(NSHomeDirectory())/.local/bin", "/opt/homebrew/bin", "/usr/local/bin"]
+        environment["PATH"] = (extra + [environment["PATH"] ?? "/usr/bin:/bin:/usr/sbin:/sbin"])
+            .joined(separator: ":")
+        return environment
     }
 
     /// Ensures Magic Macropad is trusted for Accessibility (required to synthesize
@@ -188,6 +218,28 @@ final class ActionEngine {
         case .volumeDown: return .volumeDown
         case .mute: return .mute
         }
+    }
+
+    // MARK: Synthesized input
+
+    /// Keystrokes land in the key window of the active app. While our own panel
+    /// is open that's Magic Macropad itself, so step aside first and post once
+    /// the app the gesture was resolved for is frontmost again.
+    private func whenFrontAppIsActive(_ post: @escaping @MainActor () -> Void) {
+        guard NSApp.isActive else {
+            post()
+            return
+        }
+        let once = RunOnce(post)
+        once.observer = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { note in
+            let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            guard app?.processIdentifier != ProcessInfo.processInfo.processIdentifier else { return }
+            MainActor.assumeIsolated { once.run() }
+        }
+        NSApp.hide(nil)
+        // Fallback in case no other app takes over.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { once.run() }
     }
 
     /// Synthesizes ⌘Tab as a real hold-⌘ / tap-Tab / release-⌘ sequence. A plain
@@ -226,23 +278,7 @@ final class ActionEngine {
         }
     }
 
-    private func runShell(_ script: String) {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        process.arguments = ["-lc", script]
-        process.terminationHandler = { [weak self] process in
-            if process.terminationStatus != 0 {
-                Task { @MainActor in
-                    self?.notifyFailure("Script exited with status \(process.terminationStatus)")
-                }
-            }
-        }
-        do {
-            try process.run()
-        } catch {
-            notifyFailure("Could not run script: \(error.localizedDescription)")
-        }
-    }
+    // MARK: Notifications
 
     private func notifyFailure(_ message: String) {
         NSLog("MagicKeys: action failed — \(message)")
@@ -251,19 +287,37 @@ final class ActionEngine {
 
     /// A neutral status notification (e.g. a toggle's new state), so actions with
     /// no visible effect still confirm they ran.
-    private func notifyInfo(_ message: String) {
+    func notifyInfo(_ message: String) {
         postNotification(message)
     }
 
     private func postNotification(_ message: String) {
-        let center = UNUserNotificationCenter.current()
-        center.requestAuthorization(options: [.alert]) { granted, _ in
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { granted, _ in
             guard granted else { return }
             let content = UNMutableNotificationContent()
             content.title = "Magic Macropad"
             content.body = message
-            center.add(UNNotificationRequest(identifier: UUID().uuidString,
-                                             content: content, trigger: nil))
+            UNUserNotificationCenter.current().add(
+                UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
         }
+    }
+}
+
+/// Runs an action once, from whichever of several triggers fires first.
+@MainActor
+private final class RunOnce {
+    var observer: NSObjectProtocol?
+    private var action: (@MainActor () -> Void)?
+
+    init(_ action: @escaping @MainActor () -> Void) {
+        self.action = action
+    }
+
+    func run() {
+        if let observer { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
+        observer = nil
+        let action = self.action
+        self.action = nil
+        action?()
     }
 }

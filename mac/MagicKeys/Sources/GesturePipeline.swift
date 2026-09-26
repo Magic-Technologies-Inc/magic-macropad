@@ -59,8 +59,11 @@ final class GesturePipeline {
         timer = nil
         guard let deadline = engine.nextDeadline else { return }
         let delay = max(0, deadline - clock())
-        timer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+        let timer = Timer(timeInterval: delay, repeats: false) { [weak self] _ in
             Task { @MainActor in self?.expire() }
         }
+        // Common modes, so deadlines still fire while a menu or modal panel is open.
+        RunLoop.main.add(timer, forMode: .common)
+        self.timer = timer
     }
 }

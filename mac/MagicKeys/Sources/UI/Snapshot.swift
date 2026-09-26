@@ -10,7 +10,9 @@ enum Snapshot {
     static func runIfRequested() {
         guard let path = ProcessInfo.processInfo.environment["MAGICKEYS_SNAPSHOT"] else { return }
 
-        let model = AppModel()
+        // A throwaway config, so snapshot bindings never touch the user's own.
+        let model = AppModel(configStore: ConfigStore(directory: FileManager.default.temporaryDirectory
+            .appendingPathComponent("MagicKeysSnapshot-\(UUID().uuidString)")))
         model.configStore.update {
             // Default profile: tap + hold bound (Terminal will inherit hold).
             $0.profiles[0].keys[0].tap = .openURL(urlString: "https://usemagic.io")
@@ -57,7 +59,7 @@ enum Snapshot {
         func renderRecorder(to url: URL) {
             let view = VStack(alignment: .leading, spacing: 12) {
                 Text("KEYSTROKE").font(MagicFont.text(11, weight: .semibold)).foregroundStyle(MagicColor.textTertiary)
-                KeyRecorderField(keyCode: .constant(0), modifiers: .constant([]))       // empty
+                KeyRecorderField(keyCode: .constant(nil), modifiers: .constant([]))     // empty
                 KeyRecorderField(keyCode: .constant(9), modifiers: .constant([.command, .shift]))  // ⌘⇧V
             }
             .frame(width: 320)

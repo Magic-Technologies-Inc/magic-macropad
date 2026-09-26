@@ -12,7 +12,7 @@ final class AppModel: ObservableObject {
     /// Which profile the config UI is currently editing (chip selection).
     @Published var editingProfileID: String
 
-    let configStore = ConfigStore()
+    let configStore: ConfigStore
     let frontApps = FrontAppMonitor()
     private let actionEngine = ActionEngine()
     private let easterEgg = EasterEgg()
@@ -20,7 +20,8 @@ final class AppModel: ObservableObject {
     private var pipeline: GesturePipeline?
     private var observers: [AnyCancellable] = []
 
-    init() {
+    init(configStore: ConfigStore = ConfigStore()) {
+        self.configStore = configStore
         editingProfileID = configStore.config.defaultProfile.id
         // ConfigStore and FrontAppMonitor are nested ObservableObjects; SwiftUI
         // views observe AppModel, not them. Forward their changes so config edits
@@ -90,6 +91,9 @@ final class AppModel: ObservableObject {
 
 
     func start() {
+        if let backup = configStore.unreadableConfigBackup {
+            actionEngine.notifyInfo("Your settings file couldn't be read, so Magic Macropad started from its default bindings. The old file was kept as \(backup.lastPathComponent) in \(backup.deletingLastPathComponent().path).")
+        }
         pipeline = makePipeline()
 
         hidService.onConnectionChange = { [weak self] connected in

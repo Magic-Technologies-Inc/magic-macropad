@@ -3,18 +3,19 @@ import ApplicationServices
 import UserNotifications
 
 /// Requests the permissions Magic Macropad needs to synthesize key/media events and
-/// post failure notifications. Also clears any stale Accessibility grant left by
-/// a previously-installed build of the app (the grant is keyed to the exact code
-/// signature, so a rebuilt binary at the same path is often "listed but not
-/// trusted" until the old entry is cleared and re-granted).
+/// post failure notifications. When Accessibility isn't trusted, also clears any
+/// stale grant left by a previously-installed build of the app (the grant is keyed
+/// to the exact code signature, so a rebuilt binary at the same path is often
+/// "listed but not trusted" until the old entry is cleared and re-granted).
 @MainActor
 enum Permissions {
     static var isAccessibilityTrusted: Bool {
         AXIsProcessTrusted()
     }
 
-    /// One-click flow: clear the old grant, then prompt for Accessibility and
-    /// Notifications and open the Accessibility settings pane to toggle it on.
+    /// One-click flow: prompt for Notifications, and — only if Accessibility isn't
+    /// already trusted — clear the stale grant, prompt, and open the Accessibility
+    /// settings pane to toggle it on. A working grant is never touched.
     ///
     /// System Settings is quit first so the Privacy list reopens fresh — the
     /// pane caches its rows and will otherwise show a stale "on" toggle for the
@@ -22,9 +23,10 @@ enum Permissions {
     /// longer matches, so the running process is actually untrusted until the
     /// user re-enables it).
     static func requestAll() {
+        requestNotifications()
+        guard !isAccessibilityTrusted else { return }
         resetAccessibilityGrant()
         promptAccessibility()
-        requestNotifications()
         quitSystemSettings()
         // Let System Settings fully terminate before reopening, so the pane
         // loads a fresh list rather than the cached one it was just showing.

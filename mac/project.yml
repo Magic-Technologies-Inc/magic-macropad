@@ -26,6 +26,9 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Magic Macropad
         INFOPLIST_KEY_LSUIElement: YES   # menu-bar app, no Dock icon
+        # Toggle Dark Mode and scripts that drive other apps send Apple Events;
+        # without this, macOS denies them instead of asking.
+        INFOPLIST_KEY_NSAppleEventsUsageDescription: "Magic Macropad sends Apple Events when an action controls another app, like Toggle Dark Mode or a script that empties the Trash."
         ASSETCATALOG_COMPILER_APPICON_NAME: MagicIcon
         CODE_SIGN_IDENTITY: "-"          # ad-hoc signing for dev builds
         SWIFT_VERSION: "5.9"
