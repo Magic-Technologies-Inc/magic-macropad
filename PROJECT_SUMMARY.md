@@ -63,5 +63,5 @@ runs the user's configured actions.
 
 ## Explicitly out of scope for v1
 
-On-device config, OTA/DFU, smart-home actions (hook exists via the
-`MagicAction` protocol), non-Mac hosts.
+On-device config, OTA/DFU, smart-home actions (would be a new `ActionConfig`
+case), non-Mac hosts.

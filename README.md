@@ -142,8 +142,8 @@ In plain English (the license itself is what counts):
 
 For commercial licensing, get in touch at [usemagic.io](https://usemagic.io).
 
-Some bundled fonts and sounds are third-party and keep their own licenses; see
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The Magic name and logo aren't
+Some bundled fonts, a sound, and two small firmware files are third-party and
+keep their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The Magic name and logo aren't
 licensed at all; see [TRADEMARKS.md](TRADEMARKS.md).
 
 ---

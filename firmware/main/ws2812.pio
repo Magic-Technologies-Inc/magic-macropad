@@ -1,5 +1,10 @@
-; WS2812 driver (from pico-examples, BSD-3-Clause, Raspberry Pi (Trading) Ltd.)
-; Drives the RP2040-Zero's onboard NeoPixel.
+;
+; Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
+;
+; SPDX-License-Identifier: BSD-3-Clause
+;
+; WS2812 driver from pico-examples (pio/ws2812/ws2812.pio), trimmed to drive
+; the RP2040-Zero's onboard NeoPixel. License text: THIRD_PARTY_NOTICES.md.
 
 .program ws2812
 .side_set 1

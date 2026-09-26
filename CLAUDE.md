@@ -36,8 +36,9 @@ changing the protocol or architecture.
 - **Protocol changes touch both sides.** Firmware and app live in one repo so a
   report-format change lands as one commit updating both, plus the spec.
 - **Keep the four Mac app units isolated:** HIDService (only unit touching
-  IOKit), GestureEngine (pure logic, unit-tested), ActionEngine (`MagicAction`
-  protocol), ConfigStore (Codable JSON in Application Support).
+  IOKit), GestureEngine (pure logic, unit-tested), ActionEngine (an exhaustive
+  switch over the Codable `ActionConfig` enum — a new action is one case plus
+  one switch arm), ConfigStore (Codable JSON in Application Support).
 - **Key count is 3** everywhere: CAD, firmware, and app.
 - Dev USB IDs: VID `0x1209` (pid.codes) + test PID until Magic has its own VID.
 - **Public repo, CC BY-NC-SA 4.0.** Never commit the Advercase fonts
@@ -50,5 +51,7 @@ changing the protocol or architecture.
 
 - Firmware: Pico SDK flow from `firmware/` (`cmake -B build -G Ninja && ninja -C build`,
   flash the UF2 via BOOTSEL or `picotool`; see `firmware/README.md`).
-- Mac app: Xcode project in `mac/`.
+- Mac app: XcodeGen project in `mac/` — edit `project.yml`, then `xcodegen generate`
+  (the `.xcodeproj` is generated and gitignored). Core logic: `swift test` in
+  `mac/MagicKeysCore`.
 - Hardware-in-loop smoke test: Python `hidapi` script (see spec's Testing section).
