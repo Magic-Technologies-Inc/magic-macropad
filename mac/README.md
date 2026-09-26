@@ -10,7 +10,8 @@ The Xcode target and Swift package keep the older names (`MagicKeys`,
 ## Structure
 
 - `MagicKeysCore/`: SwiftPM package with protocol parsing, the gesture engine,
-  and config models/store. Test with `swift test` (no hardware needed).
+  config models/store, and the shell-script presets. Test with `swift test` (no
+  hardware needed).
 - `MagicKeys/Sources/`: the app target, with HIDService (IOKit),
   GesturePipeline, ActionEngine, and the SwiftUI UI. XcodeGen generates the
   project.

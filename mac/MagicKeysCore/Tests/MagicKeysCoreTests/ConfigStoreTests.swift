@@ -55,6 +55,36 @@ final class ConfigStoreTests: XCTestCase {
         XCTAssertEqual(store.config, K1Config.makeSeeded())
     }
 
+    func testMissingFileLeavesNoBackup() {
+        XCTAssertNil(ConfigStore(directory: dir).unreadableConfigBackup)
+    }
+
+    func testUnreadableFileIsMovedAsideNotOverwritten() throws {
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let original = Data(#"{"profiles": [ {"id": "default",}, ]}"#.utf8)  // hand-edit typo
+        try original.write(to: dir.appendingPathComponent("config.json"))
+
+        let store = ConfigStore(directory: dir)
+        XCTAssertEqual(store.config, K1Config.makeSeeded())
+        let backup = try XCTUnwrap(store.unreadableConfigBackup)
+        XCTAssertEqual(try Data(contentsOf: backup), original)
+
+        store.update { $0.profiles[0].keys[0].tap = .media(command: .mute) }
+        XCTAssertEqual(try Data(contentsOf: backup), original, "saving must never clobber the unreadable original")
+        XCTAssertEqual(ConfigStore(directory: dir).config.profiles[0].keys[0].tap, .media(command: .mute))
+    }
+
+    func testConfigFromANewerBuildIsKept() throws {
+        // An action this build doesn't know makes the whole file undecodable.
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let newer = #"{"profiles":[{"id":"default","name":"macOS","symbol":"desktopcomputer","keys":[{"tap":{"system":{"command":"toggleWifi"}}},{},{}]}],"timing":{"doubleTapWindow":0.3,"holdThreshold":0.4}}"#
+        try Data(newer.utf8).write(to: dir.appendingPathComponent("config.json"))
+
+        let store = ConfigStore(directory: dir)
+        let backup = try XCTUnwrap(store.unreadableConfigBackup)
+        XCTAssertEqual(try String(contentsOf: backup, encoding: .utf8), newer)
+    }
+
     func testLegacyFileMigratesOnLoad() throws {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let legacy = """

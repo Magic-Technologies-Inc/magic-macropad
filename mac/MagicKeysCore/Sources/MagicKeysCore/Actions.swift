@@ -26,7 +26,7 @@ public enum SystemCommand: String, Codable, CaseIterable, Sendable {
     case toggleDarkMode       // switch between light and dark appearance
     case screenshotRegion     // interactive region capture → clipboard
     case missionControl       // open Mission Control
-    case toggleKeepAwake      // caffeinate on/off (prevent sleep)
+    case toggleKeepAwake      // prevent idle sleep on/off
 }
 
 /// AI-assistant actions — the differentiator for a keypad from an AI company.
@@ -149,9 +149,10 @@ public struct K1Config: Codable, Equatable, Sendable {
     }
 
     /// A first-run config so a brand-new install does something useful before
-    /// the user configures anything. Only applied when there's no config on
-    /// disk — it never overwrites an existing setup. Showcases each action
-    /// family across the three keys: media, system, and AI.
+    /// the user configures anything. Used when there's no readable config on
+    /// disk — ConfigStore moves an unreadable one aside, never overwriting an
+    /// existing setup. Showcases each action family across the three keys:
+    /// media, system, and AI.
     public static func makeSeeded() -> K1Config {
         var profile = AppProfile.makeDefaultProfile()
         if profile.keys.count == 3 {
@@ -167,9 +168,8 @@ public struct K1Config: Codable, Equatable, Sendable {
             profile.keys[2] = KeyBinding(
                 tap: .ai(command: .newClaudeChat),
                 doubleTap: .ai(command: .newChatGPTChat),
-                tripleTap: .shellScript(
-                    script: #"pbpaste | claude -p "Fix grammar and tighten this. Return only the revised text, no preamble." | pbcopy && osascript -e 'display notification "Rewritten — ⌘V to paste" with title "Claude"'"#,
-                    name: "Improve Writing"),
+                tripleTap: .shellScript(script: ScriptPresets.improveWriting.script,
+                                        name: ScriptPresets.improveWriting.name),
                 hold: .ai(command: .dictation))
         }
         return K1Config(profiles: [profile], timing: GestureTiming())

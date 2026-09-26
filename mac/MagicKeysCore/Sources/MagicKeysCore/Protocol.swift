@@ -34,6 +34,7 @@ public enum K1Protocol {
     public static let vendorID = 0x1209
     public static let productID = 0x0001
     public static let usagePage = 0xFF60
+    public static let usage = 0x61
     public static let reportSize = 8
     public static let keyCount = 3
 

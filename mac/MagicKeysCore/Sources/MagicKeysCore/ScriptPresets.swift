@@ -4,39 +4,69 @@ import Foundation
 /// tweak. Grouped into `category` submenus in the picker. Kept dependency-light,
 /// except a few that use tools the user likely already has (`claude`, `cursor`,
 /// `gh`, `blueutil`) — those note the requirement.
-struct ScriptPreset: Identifiable {
-    var id: String { name }
-    let name: String
-    let category: String
-    let script: String
+public struct ScriptPreset: Identifiable, Equatable, Sendable {
+    public var id: String { name }
+    public let name: String
+    public let category: String
+    public let script: String
 }
 
-enum ScriptPresets {
-    static let all: [ScriptPreset] = [
+public enum ScriptPresets {
+    /// Also the seeded key-3 triple tap (see K1Config.makeSeeded).
+    public static let improveWriting = ScriptPreset(
+        name: "Improve Writing", category: "AI · Clipboard",
+        script: clipboardThroughClaude(
+            "Fix grammar and tighten this. Return only the revised text, no preamble.",
+            done: "Rewritten — ⌘V to paste"))
+
+    public static let all: [ScriptPreset] = [
         // MARK: AI · Clipboard — pipe the clipboard through Claude, result back on the clipboard.
-        ScriptPreset(
-            name: "Improve Writing", category: "AI · Clipboard",
-            script: #"pbpaste | claude -p "Fix grammar and tighten this. Return only the revised text, no preamble." | pbcopy && osascript -e 'display notification "Rewritten — ⌘V to paste" with title "Claude"'"#),
+        improveWriting,
         ScriptPreset(
             name: "Explain Clipboard", category: "AI · Clipboard",
-            script: #"pbpaste | claude -p "Explain this clearly and concisely." | pbcopy && osascript -e 'display notification "Explanation copied — ⌘V" with title "Claude"'"#),
+            script: clipboardThroughClaude("Explain this clearly and concisely.",
+                                           done: "Explanation copied — ⌘V")),
         ScriptPreset(
             name: "Summarize to Bullets", category: "AI · Clipboard",
-            script: #"pbpaste | claude -p "Summarize this in 3-5 tight bullet points." | pbcopy && osascript -e 'display notification "Summary copied — ⌘V" with title "Claude"'"#),
+            script: clipboardThroughClaude("Summarize this in 3-5 tight bullet points.",
+                                           done: "Summary copied — ⌘V")),
         ScriptPreset(
             name: "Explain This Error", category: "AI · Clipboard",
-            script: #"pbpaste | claude -p "Explain this error and give the most likely fix." | pbcopy && osascript -e 'display notification "Fix copied — ⌘V" with title "Claude"'"#),
+            script: clipboardThroughClaude("Explain this error and give the most likely fix.",
+                                           done: "Fix copied — ⌘V")),
 
         // MARK: AI · Coding
+        // Values reach AppleScript as `argv` (and the shell via `quoted form of`),
+        // never spliced into script source, so quotes in them can't break out.
         ScriptPreset(
             name: "New Claude Session Here", category: "AI · Coding",
-            script: #"d=$(osascript -e 'tell application "Finder" to POSIX path of (insertion location as alias)'); osascript -e "tell app \"Terminal\" to do script \"cd '$d' && claude\"" -e 'tell app "Terminal" to activate'"#),
+            script: #"""
+            # Requires the Claude CLI (claude). Opens it in the front Finder window's folder.
+            dir=$(osascript -e 'tell application "Finder" to POSIX path of (insertion location as alias)') || exit
+            osascript - "$dir" <<'EOF'
+            on run argv
+                tell application "Terminal"
+                    do script "cd " & quoted form of (item 1 of argv) & " && claude"
+                    activate
+                end tell
+            end run
+            EOF
+            """#),
         ScriptPreset(
             name: "AI Commit", category: "AI · Coding",
             script: #"""
-# Edit the repo path for your project
-cd ~/Developer/your-project && git add -A && msg=$(git diff --cached | claude -p "Write a one-line conventional-commit message for this diff. Output only the message.") && git commit -m "$msg" && osascript -e "display notification \"$msg\" with title \"Committed\""
-"""#),
+            # Requires the Claude CLI (claude). Edit the repo path for your project.
+            cd ~/Developer/your-project || exit
+            git add -A || exit
+            msg=$(git diff --cached | claude -p "Write a one-line conventional-commit message for this diff. Output only the message.") || exit
+            [ -n "$msg" ] || { echo "Claude returned an empty commit message" >&2; exit 1; }
+            git commit -m "$msg" || exit
+            osascript - "$msg" <<'EOF'
+            on run argv
+                display notification (item 1 of argv) with title "Committed"
+            end run
+            EOF
+            """#),
 
         // MARK: Git (edit the repo path)
         ScriptPreset(
@@ -54,7 +84,7 @@ cd ~/Developer/your-project && git add -A && git commit -m "wip: $(date '+%F %H:
         ScriptPreset(
             name: "Open Repo on GitHub", category: "Git",
             script: #"""
-# Edit the repo path for your project
+# Requires the GitHub CLI (gh). Edit the repo path for your project.
 cd ~/Developer/your-project && gh browse
 """#),
         ScriptPreset(
@@ -67,7 +97,10 @@ cd ~/Developer/your-project && git branch --show-current | pbcopy
         // MARK: Editor & Finder
         ScriptPreset(
             name: "Open Folder in Cursor", category: "Editor & Finder",
-            script: #"d=$(osascript -e 'tell application "Finder" to POSIX path of (insertion location as alias)'); cursor "$d""#),
+            script: #"""
+# Requires Cursor's shell command (cursor).
+d=$(osascript -e 'tell application "Finder" to POSIX path of (insertion location as alias)'); cursor "$d"
+"""#),
 
         // MARK: System
         ScriptPreset(
@@ -100,7 +133,7 @@ blueutil -p toggle
     ]
 
     /// Presets grouped by category, preserving first-seen order for both.
-    static var byCategory: [(category: String, presets: [ScriptPreset])] {
+    public static var byCategory: [(category: String, presets: [ScriptPreset])] {
         var order: [String] = []
         var groups: [String: [ScriptPreset]] = [:]
         for preset in all {
@@ -108,5 +141,26 @@ blueutil -p toggle
             groups[preset.category, default: []].append(preset)
         }
         return order.map { ($0, groups[$0]!) }
+    }
+
+    /// The name to show after picking `preset` from the Examples menu. A name the
+    /// user typed is kept; an empty one, or one that came from another example,
+    /// follows the new pick so the label always describes the script it runs.
+    public static func name(afterPicking preset: ScriptPreset, currentName: String) -> String {
+        let isExampleName = currentName.isEmpty || all.contains { $0.name == currentName }
+        return isExampleName ? preset.name : currentName
+    }
+
+    /// Pipes the clipboard through `claude -p` and puts the answer back — only
+    /// once Claude has actually answered. A missing, offline or logged-out CLI
+    /// leaves the clipboard untouched and exits non-zero, so the app reports it.
+    private static func clipboardThroughClaude(_ prompt: String, done notice: String) -> String {
+        """
+        # Requires the Claude CLI (claude). The clipboard is only replaced once Claude answers.
+        out=$(pbpaste | claude -p "\(prompt)") || exit
+        [ -n "$out" ] || { echo "Claude returned an empty answer" >&2; exit 1; }
+        printf '%s' "$out" | pbcopy
+        osascript -e 'display notification "\(notice)" with title "Claude"'
+        """
     }
 }
