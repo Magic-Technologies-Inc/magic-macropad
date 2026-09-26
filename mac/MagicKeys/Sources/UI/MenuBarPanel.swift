@@ -67,7 +67,7 @@ struct MenuBarPanel: View {
 
     private var header: some View {
         HStack(alignment: .center) {
-            Text("Magic Keys")
+            Text("Magic Macropad")
                 .font(MagicFont.display(30))
                 .foregroundStyle(MagicColor.textPrimary)
             Spacer()

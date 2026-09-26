@@ -21,8 +21,10 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.usemagic.magickeys
+        PRODUCT_NAME: Magic Macropad     # .app bundle + process name
+        PRODUCT_MODULE_NAME: MagicKeys   # Swift module name stays put
         GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: Magic Keys
+        INFOPLIST_KEY_CFBundleDisplayName: Magic Macropad
         INFOPLIST_KEY_LSUIElement: YES   # menu-bar app, no Dock icon
         ASSETCATALOG_COMPILER_APPICON_NAME: MagicIcon
         CODE_SIGN_IDENTITY: "-"          # ad-hoc signing for dev builds

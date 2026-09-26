@@ -2,8 +2,8 @@ import AppKit
 import Combine
 
 /// Tracks the frontmost application so bindings can switch per app (Logi
-/// Options+ style). Ignores Magic Keys itself, so opening the popover doesn't
-/// make Magic Keys the "current app".
+/// Options+ style). Ignores Magic Macropad itself, so opening the popover doesn't
+/// make Magic Macropad the "current app".
 @MainActor
 final class FrontAppMonitor: ObservableObject {
     struct FrontApp: Equatable {
@@ -36,7 +36,7 @@ final class FrontAppMonitor: ObservableObject {
     }
 
     /// The bundle id to resolve a gesture against, read live at press time. When
-    /// Magic Keys itself is frontmost (popover open), fall back to the last real app.
+    /// Magic Macropad itself is frontmost (popover open), fall back to the last real app.
     var currentBundleID: String? {
         let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
         return (front == nil || front == selfBundleID) ? frontApp?.bundleID : front

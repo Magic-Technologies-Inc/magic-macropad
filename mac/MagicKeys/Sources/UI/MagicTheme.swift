@@ -2,7 +2,7 @@ import AppKit
 import CoreText
 import SwiftUI
 
-// The Magic palette, ported from iOS/Magic/DesignSystem/Tokens (Brand Guidelines p.10).
+// The Magic brand palette.
 // Neutrals are Prussian-warmed, never pure grey. One Dawn element per screen, maximum.
 
 extension NSColor {
@@ -80,6 +80,8 @@ enum MagicColor {
 
 enum MagicFont {
     /// Advercase — display face for titles and the device's key numerals.
+    /// Commercially licensed, so it isn't in the public repo; without the files
+    /// bundled, SwiftUI falls back to the system font.
     static func display(_ size: CGFloat, bold: Bool = false) -> Font {
         .custom(bold ? "Advercase-Bold" : "Advercase-Regular", size: size)
     }

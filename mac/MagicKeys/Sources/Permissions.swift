@@ -2,7 +2,7 @@ import AppKit
 import ApplicationServices
 import UserNotifications
 
-/// Requests the permissions Magic Keys needs to synthesize key/media events and
+/// Requests the permissions Magic Macropad needs to synthesize key/media events and
 /// post failure notifications. Also clears any stale Accessibility grant left by
 /// a previously-installed build of the app (the grant is keyed to the exact code
 /// signature, so a rebuilt binary at the same path is often "listed but not

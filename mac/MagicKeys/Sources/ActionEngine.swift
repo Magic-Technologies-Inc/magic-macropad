@@ -138,7 +138,7 @@ final class ActionEngine {
         if let process = keepAwakeProcess, process.isRunning {
             process.terminate()
             keepAwakeProcess = nil
-            notifyInfo("Sleep allowed — Magic Keys is no longer keeping this Mac awake.")
+            notifyInfo("Sleep allowed — Magic Macropad is no longer keeping this Mac awake.")
         } else {
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/caffeinate")
@@ -170,12 +170,12 @@ final class ActionEngine {
         }
     }
 
-    /// Ensures Magic Keys is trusted for Accessibility (required to synthesize
+    /// Ensures Magic Macropad is trusted for Accessibility (required to synthesize
     /// key and media events), prompting on first use. Returns the trust state.
     private func ensureAccessibility() -> Bool {
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         if AXIsProcessTrustedWithOptions(options) { return true }
-        notifyFailure("Allow Magic Keys under System Settings → Privacy & Security → Accessibility, then try again.")
+        notifyFailure("Allow Magic Macropad under System Settings → Privacy & Security → Accessibility, then try again.")
         return false
     }
 
@@ -260,7 +260,7 @@ final class ActionEngine {
         center.requestAuthorization(options: [.alert]) { granted, _ in
             guard granted else { return }
             let content = UNMutableNotificationContent()
-            content.title = "Magic Keys"
+            content.title = "Magic Macropad"
             content.body = message
             center.add(UNNotificationRequest(identifier: UUID().uuidString,
                                              content: content, trigger: nil))
