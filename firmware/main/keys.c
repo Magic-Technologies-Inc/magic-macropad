@@ -10,10 +10,18 @@ static const uint K1_KEY_GPIOS[K1_KEY_COUNT] = {12, 11, 10};
 static queue_t s_event_queue;
 static k1_debounce_t s_db[K1_KEY_COUNT];
 static uint64_t s_next_scan_us;
+static bool s_overflow;  // an edge was dropped because the queue was full
 
 bool k1_keys_pressed(int key)
 {
     return s_db[key].stable;
+}
+
+bool k1_keys_take_overflow(void)
+{
+    bool overflow = s_overflow;
+    s_overflow = false;
+    return overflow;
 }
 
 queue_t *k1_keys_init(void)
@@ -45,8 +53,10 @@ void k1_keys_poll(void)
                 .key = (uint8_t)i,
                 .state = s_db[i].stable ? K1_KEY_DOWN : K1_KEY_UP,
             };
-            if (!queue_try_add(&s_event_queue, &ev))
+            if (!queue_try_add(&s_event_queue, &ev)) {
+                s_overflow = true;
                 printf("k1_keys: event queue full, dropped key %d\n", i);
+            }
         }
     }
 }

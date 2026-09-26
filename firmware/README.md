@@ -29,12 +29,17 @@ Hold BOOT while plugging the board in, then drag the UF2 onto the mounted
 
 - Host unit tests (no hardware):
   `cc -I main tests/host/test_debounce.c main/debounce.c -o /tmp/test_debounce && /tmp/test_debounce`
+  and `cc -I main tests/host/test_keysync.c main/keysync.c -o /tmp/test_keysync && /tmp/test_keysync`
 - Hardware-in-loop: `tools/smoke_test.py` (see its docstring)
 
 Key GPIOs are defined in `main/keys.c` (`K1_KEY_GPIOS`): GPIO 12, 11, and 10
 for keys 0, 1, and 2 (the app's Key 1–3). They're active-low (key to GND) with
 internal pull-ups. Debug logs go out UART0 on GPIO 0/1 at 115200; wiring it is
 optional.
+
+While the host isn't listening (bus suspended, not yet mounted), key edges
+are dropped rather than replayed later as live presses; when it's back, any
+key whose state changed meanwhile is reported once (`main/keysync.c`).
 
 The onboard WS2812 (GPIO 16) shows a dim per-key color while a key is held
 (red/green/blue for keys 0/1/2); see `main/led.c`.

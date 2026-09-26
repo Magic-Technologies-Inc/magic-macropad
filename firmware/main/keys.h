@@ -11,3 +11,7 @@ void k1_keys_poll(void);
 
 // Debounced state of one key (true = held).
 bool k1_keys_pressed(int key);
+
+// True (once) if an edge was dropped because the queue was full since the
+// last call, so the USB side can realign the host from the live key state.
+bool k1_keys_take_overflow(void);

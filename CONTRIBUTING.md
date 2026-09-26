@@ -29,7 +29,7 @@ fit together.
   then build the app as described in [mac/README.md](mac/README.md). The
   **Test keys** menu fires virtual presses, so you don't need hardware.
 - **Firmware:** see [firmware/README.md](firmware/README.md). The host-side
-  debounce tests run without a board.
+  tests (debounce, keysync) run without a board.
 - **CAD:** edit the `.scad` source and re-export the STLs using the commands
   at the top of each file. Commit the source and the exports together.
 

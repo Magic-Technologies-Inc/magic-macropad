@@ -8,6 +8,7 @@ add_executable(k1_firmware
     main/k1_main.c
     main/debounce.c
     main/keys.c
+    main/keysync.c
     main/led.c
     main/usb_hid.c
 )

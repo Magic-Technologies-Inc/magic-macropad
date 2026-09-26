@@ -1,4 +1,6 @@
 #include "usb_hid.h"
+#include "keys.h"
+#include "keysync.h"
 #include "protocol.h"
 #include "tusb.h"
 #include <stdio.h>
@@ -104,6 +106,7 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid)
 
 static uint8_t s_seq;
 static volatile bool s_info_requested;
+static k1_keysync_t s_sync;
 
 uint8_t const *tud_hid_descriptor_report_cb(uint8_t instance)
 {
@@ -132,24 +135,49 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id,
 
 // Seq only advances on a successful send, so host-side gap detection flags
 // real USB losses, not benign drops while the host isn't polling.
-static void send_report(uint8_t msg, uint8_t b1, uint8_t b2,
+static bool send_report(uint8_t msg, uint8_t b1, uint8_t b2,
                         uint8_t p0, uint8_t p1, uint8_t p2, uint8_t p3)
 {
     uint8_t report[K1_REPORT_SIZE] = {msg, b1, b2, s_seq, p0, p1, p2, p3};
-    if (tud_hid_report(0, report, sizeof(report)))
+    if (tud_hid_report(0, report, sizeof(report))) {
         s_seq++;
-    else
-        printf("k1_usb: report dropped (host not ready)\n");
+        return true;
+    }
+    printf("k1_usb: report dropped (host not ready)\n");
+    return false;
 }
 
-// Best-effort delivery: while the host isn't polling, key events pile up in
-// the 32-slot queue and overflow is dropped by the scan side. One report per
-// call — the IN endpoint fits one transfer at a time and the main loop spins
-// far faster than the host polls.
+static void send_key(uint8_t key, bool down)
+{
+    if (send_report(K1_MSG_KEY_EVENT, key, down ? K1_KEY_DOWN : K1_KEY_UP, 0, 0, 0, 0))
+        k1_keysync_delivered(&s_sync, key, down);
+    else
+        k1_keysync_invalidate(&s_sync);  // lost report: realign rather than leave the host out of step
+}
+
+// A fresh enumeration: the host starts from "all keys up".
+void tud_mount_cb(void)
+{
+    k1_keysync_reset(&s_sync);
+}
+
+// Edges flow from the queue while the host is listening. While it isn't
+// (bus suspended, not yet mounted) they're dropped rather than replayed later
+// as live presses, and keysync realigns the host's view of each key once it's
+// back. One report per call — the IN endpoint fits one transfer at a time and
+// the main loop spins far faster than the host polls.
 void k1_usb_task(queue_t *key_queue)
 {
     tud_task();
 
+    k1_key_event_t ev;
+    if (k1_keys_take_overflow())
+        k1_keysync_invalidate(&s_sync);  // an edge was lost at the source
+    if (!tud_ready()) {
+        while (queue_try_remove(key_queue, &ev)) {}
+        k1_keysync_invalidate(&s_sync);
+        return;
+    }
     if (!tud_hid_ready())
         return;
     // Answer a pending GET_INFO before key events, so a backlog of key
@@ -161,13 +189,24 @@ void k1_usb_task(queue_t *key_queue)
                     K1_KEY_COUNT, 0);
         return;
     }
-    k1_key_event_t ev;
+    if (s_sync.resync) {
+        // Queued edges are superseded by the live key state.
+        while (queue_try_remove(key_queue, &ev)) {}
+        bool pressed[K1_KEY_COUNT], down;
+        for (int i = 0; i < K1_KEY_COUNT; i++)
+            pressed[i] = k1_keys_pressed(i);
+        int key = k1_keysync_next(&s_sync, pressed, &down);
+        if (key >= 0)
+            send_key((uint8_t)key, down);
+        return;
+    }
     if (queue_try_remove(key_queue, &ev))
-        send_report(K1_MSG_KEY_EVENT, ev.key, ev.state, 0, 0, 0, 0);
+        send_key(ev.key, ev.state == K1_KEY_DOWN);
 }
 
 void k1_usb_init(void)
 {
+    k1_keysync_reset(&s_sync);
     tusb_init();
     printf("k1_usb: USB HID started (VID %04x PID %04x)\n", K1_USB_VID, K1_USB_PID);
 }
