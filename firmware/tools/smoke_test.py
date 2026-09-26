@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""K1 hardware-in-loop smoke test.
+"""Magic Macropad hardware-in-loop smoke test.
 
 Verifies: device opens, GET_INFO round-trips, and key events arrive
-with correct shape and sequence numbers. Run with the K1 plugged in:
+with correct shape, sequence numbers, and key order. Run with the pad
+plugged in (and the Mac app quit, so presses don't fire actions):
 
     python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
     .venv/bin/python smoke_test.py
@@ -27,7 +28,7 @@ def main():
         dev = hid.device()
         dev.open(VID, PID)
     except OSError:
-        fail(f"no HID device {VID:04x}:{PID:04x} — is the K1 plugged in?")
+        fail(f"no HID device {VID:04x}:{PID:04x} — is the pad plugged in?")
     dev.set_nonblocking(False)
     print(f"opened {dev.get_manufacturer_string()} {dev.get_product_string()}")
 
@@ -43,8 +44,8 @@ def main():
         fail(f"device reports {keys} keys, expected {KEY_COUNT}")
     print(f"INFO ok: fw {major}.{minor}, {keys} keys")
 
-    # Key events: one press+release per key, in order.
-    print("press and release each key once, left to right (30 s timeout)...")
+    # Key events: one press+release per key, Key 1 to Key 3.
+    print("press and release Key 1, then Key 2, then Key 3 (30 s timeout)...")
     deadline = time.time() + 30
     seen, last_seq = [], None
     while len(seen) < KEY_COUNT * 2 and time.time() < deadline:
@@ -60,9 +61,13 @@ def main():
             fail(f"sequence gap: {last_seq} -> {seq}")
         last_seq = seq
         seen.append((key, state))
-        print(f"  key {key} {'down' if state else 'up'} (seq {seq})")
+        print(f"  Key {key + 1} {'down' if state else 'up'} (seq {seq})")
     if len(seen) < KEY_COUNT * 2:
         fail(f"timed out; saw {len(seen)}/{KEY_COUNT * 2} events")
+    expected = [(key, state) for key in range(KEY_COUNT) for state in (1, 0)]
+    if seen != expected:
+        fail("keys arrived out of order; expected Key 1, 2, 3 pressed in turn. "
+             "Swap the GPIO wires, or bind the keys in the app to match.")
 
     print("PASS: smoke test complete")
 
