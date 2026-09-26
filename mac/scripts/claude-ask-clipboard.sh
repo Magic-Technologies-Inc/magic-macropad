@@ -1,5 +1,5 @@
 #!/bin/sh
-# K1 action: ask Claude about whatever text is on the clipboard; the answer
+# Magic Macropad action: ask Claude about whatever text is on the clipboard; the answer
 # pops up as a dialog. Headless via the claude CLI — no windows moved.
 
 CLAUDE="$HOME/.local/bin/claude"

@@ -35,7 +35,7 @@ enum ScriptPresets {
             name: "AI Commit", category: "AI · Coding",
             script: #"""
 # Edit the repo path for your project
-cd ~/Developer/Magic/K1 && git add -A && msg=$(git diff --cached | claude -p "Write a one-line conventional-commit message for this diff. Output only the message.") && git commit -m "$msg" && osascript -e "display notification \"$msg\" with title \"Committed\""
+cd ~/Developer/your-project && git add -A && msg=$(git diff --cached | claude -p "Write a one-line conventional-commit message for this diff. Output only the message.") && git commit -m "$msg" && osascript -e "display notification \"$msg\" with title \"Committed\""
 """#),
 
         // MARK: Git (edit the repo path)
@@ -43,25 +43,25 @@ cd ~/Developer/Magic/K1 && git add -A && msg=$(git diff --cached | claude -p "Wr
             name: "Copy Git Diff", category: "Git",
             script: #"""
 # Edit the repo path for your project
-cd ~/Developer/Magic/K1 && git diff | pbcopy && osascript -e 'display notification "Diff copied — ⌘V" with title "Clipboard"'
+cd ~/Developer/your-project && git diff | pbcopy && osascript -e 'display notification "Diff copied — ⌘V" with title "Clipboard"'
 """#),
         ScriptPreset(
             name: "Git: Commit & Push", category: "Git",
             script: #"""
 # Edit the repo path for your project
-cd ~/Developer/Magic/K1 && git add -A && git commit -m "wip: $(date '+%F %H:%M')" && git push
+cd ~/Developer/your-project && git add -A && git commit -m "wip: $(date '+%F %H:%M')" && git push
 """#),
         ScriptPreset(
             name: "Open Repo on GitHub", category: "Git",
             script: #"""
 # Edit the repo path for your project
-cd ~/Developer/Magic/K1 && gh browse
+cd ~/Developer/your-project && gh browse
 """#),
         ScriptPreset(
             name: "Copy Branch Name", category: "Git",
             script: #"""
 # Edit the repo path for your project
-cd ~/Developer/Magic/K1 && git branch --show-current | pbcopy
+cd ~/Developer/your-project && git branch --show-current | pbcopy
 """#),
 
         // MARK: Editor & Finder

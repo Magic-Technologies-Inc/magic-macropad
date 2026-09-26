@@ -1,10 +1,10 @@
 #!/bin/sh
-# K1 action: full-screen screenshot -> new Claude chat with it pasted.
+# Magic Macropad action: full-screen screenshot -> new Claude chat with it pasted.
 #
 # screencapture -c puts the whole screen on the clipboard, no interaction.
 # Then Cmd+N / Cmd+V in Claude.
 #
-# Needs (granted to MagicKeys.app, which runs this): Screen Recording for
+# Needs (granted to Magic Macropad.app, which runs this): Screen Recording for
 # screencapture, Accessibility for the System Events keystrokes.
 
 screencapture -c || exit 0

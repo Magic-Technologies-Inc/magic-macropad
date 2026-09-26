@@ -1,9 +1,14 @@
 #!/bin/sh
-# K1 action: open a terminal already running Claude Code in the K1 repo.
+# Magic Macropad action: open a terminal already running Claude Code in a
+# project folder. Set PROJECT to your repo.
 
-osascript <<'EOF'
-tell application "Terminal"
-    activate
-    do script "cd ~/Developer/Magic/K1 && claude"
-end tell
-EOF
+PROJECT="$HOME/Developer/your-project"
+
+osascript - "$PROJECT" <<'OSA'
+on run argv
+    tell application "Terminal"
+        activate
+        do script "cd " & quoted form of (item 1 of argv) & " && claude"
+    end tell
+end run
+OSA
