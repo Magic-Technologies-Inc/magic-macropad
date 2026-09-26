@@ -18,3 +18,8 @@ mac/MagicKeys.xcodeproj/
 # Firmware tooling
 firmware/tools/.venv/
 __pycache__/
+
+# Advercase (Indieground Design) is a commercially licensed brand font and
+# can't be redistributed. Official builds drop licensed copies in here;
+# without them the app falls back to the system font.
+mac/MagicKeys/Resources/Advercase-*.ttf
